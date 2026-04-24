@@ -1,0 +1,12 @@
+*.vcf.gz
+*.bcf
+*.bam
+*.bai
+*.fastq
+*.fastq.gz
+*.fasta
+*.tbi
+*.csi
+__pycache__/
+*.pyc
+.DS_Store
