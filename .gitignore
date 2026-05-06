@@ -1,12 +1,35 @@
+# Sequencing data — large, never commit
 *.vcf.gz
+*.vcf
 *.bcf
 *.bam
 *.bai
+*.cram
+*.crai
 *.fastq
 *.fastq.gz
+*.fq
+*.fq.gz
 *.fasta
+*.fa
+*.fai
 *.tbi
 *.csi
+*.gff
+*.gff.gz
+
+# Logs
+logs/
+*.out
+*.err
+
+# Python
 __pycache__/
 *.pyc
+*.pyo
+.venv/
+venv/
+
+# OS
 .DS_Store
+Thumbs.db
