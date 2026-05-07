@@ -70,5 +70,17 @@ ADAPTERS=/home/dcrawford/software/local/Trimmomatic-0.39/adapters/CombinedAdapte
 # ── Conda env (override if you split tools across envs) ──────────────────────
 CONDA_ENV=mito_genomics
 
+# ── Initialize conda shell hooks ─────────────────────────────────────────────
+# Without this, BSUB scripts on compute nodes hit:
+#   "conda: error: argument COMMAND: invalid choice: 'activate'"
+# because `module load anaconda3` puts conda in PATH but doesn't register
+# the `conda activate` shell function. Each script sources this file before
+# calling `conda activate "$CONDA_ENV"`, so this line propagates the fix
+# to all stages. Safe on login nodes too (it's a no-op if already initialized).
+if [[ -z "${CONDA_SHLVL:-}" ]]; then
+    # `conda info --base` works without shell hooks (it's a regular subcommand).
+    source "$(conda info --base)/etc/profile.d/conda.sh"
+fi
+
 # ── Make sure logs directory exists (idempotent) ─────────────────────────────
 mkdir -p "$LOGS_DIR"

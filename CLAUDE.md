@@ -15,10 +15,12 @@ Build a reproducible mitochondrial variant + haplotype pipeline for *Fundulus he
   - SnpEff annotation (when added)
   - `bcftools norm -m -any` (split multiallelic sites)
   - Final canonical output: `Fhet_MT_CDS.snps.split.vcf.gz` ← FROZEN once produced, do not rerun.
-    Status 2026-05-07: previous instance is unaccounted for on Triton 2 (IT
-    investigation pending). If unrecoverable, regenerate by running stages 04
-    → 05 → 06 (SnpEff, to write) → 07 (CDS+SNPs+norm, to write). The newly
-    produced file then becomes the frozen canonical going forward.
+    Status 2026-05-07: previous instance still unaccounted for, but upstream
+    144 MT BAMs were located at `bams/MT_bam_sam/` (not lost — just nested one
+    level). Pending env fix + BAM validation; if valid, regeneration starts at
+    stage 05 (joint call) → 06 (SnpEff, to write) → 07 (CDS+SNPs+norm, to write),
+    skipping a stage 04 rerun. The newly produced file then becomes the frozen
+    canonical going forward. See CHANGELOG 2026-05-07 for full pickup order.
 
 - **Mac (local)** — fast iteration:
   - Python haplotype parsing
@@ -28,7 +30,7 @@ Build a reproducible mitochondrial variant + haplotype pipeline for *Fundulus he
 
 ## Rules for Claude
 
-1. **Don't rerun frozen outputs.** `Fhet_MT_CDS.snps.split.vcf.gz` is canonical *once produced*. Build downstream analysis on top of it. (Status 2026-05-07: previous instance missing from Triton 2; rerun in progress per CHANGELOG.)
+1. **Don't rerun frozen outputs.** `Fhet_MT_CDS.snps.split.vcf.gz` is canonical *once produced*. Build downstream analysis on top of it. (Status 2026-05-07: previous instance still missing; upstream BAMs recovered at `bams/MT_bam_sam/`; partial rerun planned starting at stage 05 once env is fixed — see CHANGELOG.)
 2. **Don't commit data files.** `.gitignore` excludes `*.vcf.gz`, `*.bcf`, `*.bam`, `*.bai`, `*.fastq*`, `*.fasta`, `*.tbi`, `*.csi`. Scripts and docs only.
 3. **All BSUB scripts live under `jobs/`** with the numbered prefix (`01_..05_..`). New stages get the next number.
 4. **All log files write to `/projectnb/dcrawford/MT_Genomics2/logs/`** so they're easy to find and clean up.
