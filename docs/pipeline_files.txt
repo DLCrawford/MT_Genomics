@@ -1,0 +1,191 @@
+# Pipeline I/O reference — jobs/01–05 + canonical frozen artifact
+# Generated 2026-05-07.
+#
+# Every input and output file or directory the BSUB scripts reference,
+# grouped by role. For each item:
+#   - The config.sh variable name (where one exists)
+#   - The path config.sh currently expects
+#   - File type / format
+#   - Which stages produce or consume it
+#   - Status from inventory_2026-05-07.txt
+#   - The target path under MT_Genomics2/ once consolidation happens
+#
+# Use this as a checklist when locating the real, current home of each
+# item on Triton 2.
+
+
+============================================================
+SAMPLE LISTS  (plain text, one id per line)
+============================================================
+
+$SAMPLE_LIST   /projectnb/dcrawford/SSM_WGS/SSM_WGS_list.txt
+  Type   : plain text, one sample id per line (e.g. "10_0", "102_0").
+  Role   : drives LSB_JOBINDEX in stages 01, 02, 03, 04.
+  Status : does NOT exist at this path.
+  Found  : SSM_WGS/WGS_ids.txt, SSM_WGS/WGS_ids2.txt,
+           SSM_Mito/raw_seq_list.txt — one of these is probably canonical.
+  Target : $PROJECT_ROOT/SSM_WGS_list.txt
+
+$BAM_LIST      /projectnb/dcrawford/SSM_Mito/new_hap_AD2/bam_list.txt
+  Type   : plain text, one BAM filename per line (e.g. "10_0_MT.bam").
+  Role   : stage 05 — used to build $BAM_LIST_FULL with absolute paths.
+  Status : parent dir new_hap_AD2/ exists but only contains errors/, logs/.
+  Found  : SSM_Mito/bam_list.txt (512B, root) and SSM_Mito/Bam_list.txt (0B).
+  Target : $PROJECT_ROOT/bam_list.txt
+
+#> DLC file added to /Missing_Files WGS_list.txt 
+#> DLC we are going to re-run haplotype calls, this and SNPEff is where the previous errors (~1%) were created
+============================================================
+RAW READS (fastq)
+============================================================
+
+$RAW_DIR       /projectnb/dcrawford/SSM_WGS/fhet_raw_seq/
+  Type   : directory of paired Illumina reads, gzipped.
+  Files  : {sample}_1.fq.gz, {sample}_2.fq.gz   (×287 paired)
+  Role   : input to stage 01 (FastQC) and stage 02 (Trimmomatic).
+  Status : does NOT exist — raw moved to long-term cold storage.
+  Target : not consolidated. Cold-storage path lives outside this project.
+
+#> DLC NO Raw paired reads- these are in cold storage
+============================================================
+TRIMMED READS (fastq)
+============================================================
+
+$TRIM_DIR      /projectnb/dcrawford/SSM_WGS/TrimA_seq/
+  Type   : directory of Trimmomatic PE outputs, gzipped.
+  Files  : {sample}_1_p.fq.gz, {sample}_2_p.fq.gz       (paired)
+           {sample}_1_up.fq.gz, {sample}_2_up.fq.gz     (unpaired)
+  Role   : output of stage 02. Input of stages 03 and 04.
+  Status : does NOT exist at this path. Real one appears to be
+           SSM_WGS/trimmed_seq/ (2.1 TB).
+  Decision (per Doug 2026-05-07): leave in place. Just update the
+           variable in config.sh to point at trimmed_seq/.
+
+#> DLC _1.fq.gz, _2.fq.gz... files in :: /projectnb/dcrawford/SSM_WGS/trimmed_seq
+============================================================
+QC OUTPUTS  (FastQC HTML/zip; MultiQC roll-ups)
+============================================================
+
+$RAW_QC_DIR    /projectnb/dcrawford/SSM_WGS/fastqc_out/
+  Type   : directory of FastQC reports on raw fastqs.
+  Files  : {sample}_*_fastqc.html, {sample}_*_fastqc.zip
+  Role   : output of stage 01.
+  Status : does NOT exist at this path. May no longer exist at all
+           (raw reads are in cold storage).
+  Target : $PROJECT_ROOT/data/qc_raw   (or drop entirely — regeneratable)
+  
+#> DLC drop, the fastqc trimmed data (below) is sufficient. 
+
+$TRIM_QC_DIR   /projectnb/dcrawford/SSM_WGS/TrimA_fastqc_out/
+  Type   : directory of FastQC reports on trimmed paired fastqs.
+  Files  : {sample}_*_p_fastqc.html, {sample}_*_p_fastqc.zip
+  Role   : output of stage 03.
+  Status : does NOT exist at this path.
+  Found  : SSM_WGS/fastqc_TrimA/ (220 MB), SSM_WGS/fastqc_trimmed/ (174 MB).
+           Need to confirm which is current; one may be stale.
+  Target : $PROJECT_ROOT/data/qc_trimmed   (or drop — regeneratable)
+
+#> DLC  files found in /projectnb/dcrawford/SSM_WGS/fastqc_TrimA
+
+
+============================================================
+REFERENCE  (MT genome FASTA + indexes)
+============================================================
+
+$BAMS_DIR      /projectnb/dcrawford/SSM_Mito/MT_bam_sam/
+  Type   : directory of sorted, indexed MT-only alignments.
+  Files  : {sample}_MT.bam       (×144 expected)
+           {sample}_MT.bam.bai
+  Role   : input to stage 04 (bwa mem) and stage 05 (mpileup).
+  Status : Fh_MT_ref/ dir exists (17 K in du) but ls returned zero files.
+           Possible broken symlink, hidden contents, or emptied dir.
+           Need direct `ls -la` confirmation.
+  Target : $PROJECT_ROOT/refs/Fhet_MT.fasta (+ .fai, .amb, .ann, .bwt, .pac, .sa)
+
+#> DLC that is curious, but a backup is on my Mac:: /Users/douglas_crawford/Projects/SSM_Mito_All/SSM_MT_ref
+============================================================
+MT BAMs  (per-sample alignments)
+============================================================
+
+$BAMS_DIR      /projectnb/dcrawford/SSM_Mito/MT_bam_sam/
+  Type   : directory of sorted, indexed MT-only alignments.
+  Files  : {sample}_MT.bam       (×144 expected)
+           {sample}_MT.bam.bai
+  Role   : output of stage 04. Input of stage 05.
+  Status : directory does NOT exist anywhere currently visible.
+  Note   : per Doug, only the BAMs/BAIs themselves should be moved;
+           any leftover SAMs / scratch alignments / non-MT BAMs
+           in the same area should be left behind.
+  Target : $PROJECT_ROOT/bams/
+
+#>DLC  I cannot find these critical files 
+
+
+#> DLC We are going to rerun.
+============================================================
+VCFs — STAGE 05 OUTPUTS
+============================================================
+
+$VCF_DIR       /projectnb/dcrawford/SSM_Mito/new_hap_AD/
+  Type   : directory holding stage-05 outputs.
+  Files  : Fhet_mt_fullAD.vcf.gz          (all sites, with AD/DP)
+           Fhet_mt_fullAD.vcf.gz.csi
+           Fhet_mt_variantsAD.vcf.gz      (variant-only subset)
+           Fhet_mt_variantsAD.vcf.gz.csi
+           Fhet_mt_fullAD_stats.txt
+           Fhet_mt_variantsAD_stats.txt
+           bam_full_paths.txt             (built at runtime from $BAM_LIST)
+  Role   : output of stage 05.
+  Status : directory does NOT exist.
+  Target : $PROJECT_ROOT/vcf/
+
+
+============================================================
+VCFs — DOWNSTREAM (post-stage-05, post-SnpEff, post-norm)
+============================================================
+
+(canonical)    Fhet_MT_CDS.snps.split.vcf.gz
+  Type   : bgzipped VCF.
+  Role   : FROZEN canonical artifact (per CLAUDE.md). Built downstream by:
+              SnpEff annotation (stage 06, not yet written)
+           -> restrict to CDS regions, SNPs only
+           -> bcftools norm -m -any  (split multiallelic sites)
+  Status : not visible at top level of either tree.
+  Search : likely lives inside one of these subdirs — needs `ls -lh` on each:
+              SSM_Mito/Fhet_MT_vcf/        (2.5 M)
+              SSM_Mito/Fhet_MT2_vcf/       (290 M)
+              SSM_Mito/Fhet_MTx_vcf/       (58 M)
+              SSM_Mito/Fhet_MT_merged_vcf/ (230 K)
+              SSM_Mito/Fhet_MT_ann/        (5.1 M)  ← annotated VCF lives here?
+              SSM_Mito/MT_hap_VCF/         (117 M)
+  Target : $PROJECT_ROOT/vcf/Fhet_MT_CDS.snps.split.vcf.gz
+
+(observed)     /projectnb/dcrawford/SSM_Mito/normalized_renamed.vcf.gz
+  Size   : 131 GB (consistent with MT-only all-sites VCF given ~9,500x
+           coverage × 141 samples × per-allele AD/DP).
+  Role   : likely the post-norm precursor to Fhet_MT_CDS.snps.split.vcf.gz,
+           OR a parallel naming for the same artifact. Header inspection
+           (contigs + sample count) will confirm MT-only vs. whole-genome.
+  Target : depends on what it is — could become $PROJECT_ROOT/vcf/...
+
+
+============================================================
+EXTERNAL TOOLS (referenced from config.sh)
+============================================================
+
+$TRIMJAR       /home/dcrawford/software/local/Trimmomatic-0.39/trimmomatic-0.39.jar
+  Type   : jar file. Trimmomatic 0.39.
+  Role   : stage 02.
+
+$ADAPTERS      /home/dcrawford/software/local/Trimmomatic-0.39/adapters/CombinedAdapters.fa
+  Type   : FASTA. Concatenation of TruSeq3-PE.fa + NexteraPE-PE.fa.
+  Role   : stage 02 (ILLUMINACLIP).
+
+
+============================================================
+LOGS  (already in-project — not part of this consolidation)
+============================================================
+
+$LOGS_DIR      /projectnb/dcrawford/MT_Genomics2/logs/
+  Files  : NN_<stage>_<idx>.out / NN_<stage>_<idx>.err
+  Role   : BSUB stdout/stderr from every stage.

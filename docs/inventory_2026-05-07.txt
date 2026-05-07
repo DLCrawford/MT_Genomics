@@ -1,0 +1,91 @@
+# Inventory of legacy paths — Thu May  7 11:16:36 EDT 2026
+# Host: mgt3
+
+## 1. Top-level sizes
+2.2T	/projectnb/dcrawford/SSM_WGS/align
+2.3T	/projectnb/dcrawford/SSM_WGS/bcf_files
+220M	/projectnb/dcrawford/SSM_WGS/fastqc_TrimA
+174M	/projectnb/dcrawford/SSM_WGS/fastqc_trimmed
+7.6G	/projectnb/dcrawford/SSM_WGS/fst_anslyses
+688K	/projectnb/dcrawford/SSM_WGS/mpileup
+28M	/projectnb/dcrawford/SSM_WGS/nohup.out
+100M	/projectnb/dcrawford/SSM_WGS/nuc_oxphos
+7.5G	/projectnb/dcrawford/SSM_WGS/plink_gemma
+15G	/projectnb/dcrawford/SSM_WGS/plink_gemma2
+10G	/projectnb/dcrawford/SSM_WGS/plink_gemma_neutralFst
+91G	/projectnb/dcrawford/SSM_WGS/plink_oxphos_non_oxphos
+3.0M	/projectnb/dcrawford/SSM_WGS/qualimap
+512	/projectnb/dcrawford/SSM_WGS/READ_Me_SSM_WGS_informatic.txt
+1.0K	/projectnb/dcrawford/SSM_WGS/snpeff
+2.1T	/projectnb/dcrawford/SSM_WGS/trimmed_seq
+512	/projectnb/dcrawford/SSM_WGS/WGS_ids2.txt
+512	/projectnb/dcrawford/SSM_WGS/WGS_ids.txt
+352K	/projectnb/dcrawford/SSM_Mito/134_query.txt
+352K	/projectnb/dcrawford/SSM_Mito/134_raw_query.txt
+8.0K	/projectnb/dcrawford/SSM_Mito/144_depth_summary.tsv
+352K	/projectnb/dcrawford/SSM_Mito/64_query.txt
+0	/projectnb/dcrawford/SSM_Mito/96_genomecov.txt
+352K	/projectnb/dcrawford/SSM_Mito/96_query.txt
+512	/projectnb/dcrawford/SSM_Mito/bam_list.txt
+0	/projectnb/dcrawford/SSM_Mito/Bam_list.txt
+290M	/projectnb/dcrawford/SSM_Mito/Fhet_MT2_vcf
+5.1M	/projectnb/dcrawford/SSM_Mito/Fhet_MT_ann
+230K	/projectnb/dcrawford/SSM_Mito/Fhet_MT_merged_vcf
+2.5M	/projectnb/dcrawford/SSM_Mito/Fhet_MT_vcf
+58M	/projectnb/dcrawford/SSM_Mito/Fhet_MTx_vcf
+17K	/projectnb/dcrawford/SSM_Mito/Fh_MT_ref
+8.0K	/projectnb/dcrawford/SSM_Mito/merged_144_4.stats.txt
+0	/projectnb/dcrawford/SSM_Mito/merged_144_4.stats.txt
+
+
+8.8M	/projectnb/dcrawford/SSM_Mito/merged_144_4.vcf.gz
+512	/projectnb/dcrawford/SSM_Mito/merged_144_4.vcf.gz.csi
+0	/projectnb/dcrawford/SSM_Mito/Merged_2A_query.txt
+106K	/projectnb/dcrawford/SSM_Mito/merged_files
+98K	/projectnb/dcrawford/SSM_Mito/MT_144_hap
+117M	/projectnb/dcrawford/SSM_Mito/MT_hap_VCF
+27M	/projectnb/dcrawford/SSM_Mito/mt_networks_hpc
+12K	/projectnb/dcrawford/SSM_Mito/new_hap_AD2
+131G	/projectnb/dcrawford/SSM_Mito/normalized_renamed.vcf.gz
+952K	/projectnb/dcrawford/SSM_Mito/normalized_renamed.vcf.gz.csi
+8.0K	/projectnb/dcrawford/SSM_Mito/raw_seq_list.txt
+24K	/projectnb/dcrawford/SSM_Mito/vcf_qc_summary.tsv
+0	/projectnb/dcrawford/SSM_Mito/WG_mean_depth.txt
+
+## 2. Per-directory contents (config.sh targets)
+=== /projectnb/dcrawford/SSM_WGS/SSM_WGS_list.txt ===
+(does not exist)
+
+=== /projectnb/dcrawford/SSM_WGS/fhet_raw_seq ===
+(does not exist)
+
+=== /projectnb/dcrawford/SSM_WGS/TrimA_seq ===
+(does not exist)
+
+=== /projectnb/dcrawford/SSM_WGS/fastqc_out ===
+(does not exist)
+
+=== /projectnb/dcrawford/SSM_WGS/TrimA_fastqc_out ===
+(does not exist)
+
+=== /projectnb/dcrawford/SSM_Mito/Fh_MT_ref ===
+total 0
+(file count: 0)
+
+=== /projectnb/dcrawford/SSM_Mito/MT_bam_sam ===
+(does not exist)
+
+=== /projectnb/dcrawford/SSM_Mito/new_hap_AD ===
+(does not exist)
+
+=== /projectnb/dcrawford/SSM_Mito/new_hap_AD2 ===
+total 2.0K
+drwxrwx---+ 2 dcrawford ccsuser 4.0K Oct 16  2025 errors
+drwxrwx---+ 2 dcrawford ccsuser 4.0K Oct 16  2025 logs
+(file count: 2)
+
+## 3. Filesystem residency (mv stays atomic only within one fs)
+Filesystem      Size  Used Avail Use% Mounted on
+pix1-mmfs1       30T   17T   14T  56% /projectnb
+pix1-mmfs1       30T   17T   14T  56% /projectnb
+pix1-mmfs1       30T   17T   14T  56% /projectnb
