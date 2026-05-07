@@ -14,7 +14,11 @@ Build a reproducible mitochondrial variant + haplotype pipeline for *Fundulus he
   - `bcftools mpileup | bcftools call` (joint, with AD/DP) across all MT BAMs
   - SnpEff annotation (when added)
   - `bcftools norm -m -any` (split multiallelic sites)
-  - Final canonical output: `Fhet_MT_CDS.snps.split.vcf.gz` ← FROZEN, do not rerun
+  - Final canonical output: `Fhet_MT_CDS.snps.split.vcf.gz` ← FROZEN once produced, do not rerun.
+    Status 2026-05-07: previous instance is unaccounted for on Triton 2 (IT
+    investigation pending). If unrecoverable, regenerate by running stages 04
+    → 05 → 06 (SnpEff, to write) → 07 (CDS+SNPs+norm, to write). The newly
+    produced file then becomes the frozen canonical going forward.
 
 - **Mac (local)** — fast iteration:
   - Python haplotype parsing
@@ -24,7 +28,7 @@ Build a reproducible mitochondrial variant + haplotype pipeline for *Fundulus he
 
 ## Rules for Claude
 
-1. **Don't rerun frozen outputs.** `Fhet_MT_CDS.snps.split.vcf.gz` is canonical. Build downstream analysis on top of it.
+1. **Don't rerun frozen outputs.** `Fhet_MT_CDS.snps.split.vcf.gz` is canonical *once produced*. Build downstream analysis on top of it. (Status 2026-05-07: previous instance missing from Triton 2; rerun in progress per CHANGELOG.)
 2. **Don't commit data files.** `.gitignore` excludes `*.vcf.gz`, `*.bcf`, `*.bam`, `*.bai`, `*.fastq*`, `*.fasta`, `*.tbi`, `*.csi`. Scripts and docs only.
 3. **All BSUB scripts live under `jobs/`** with the numbered prefix (`01_..05_..`). New stages get the next number.
 4. **All log files write to `/projectnb/dcrawford/MT_Genomics2/logs/`** so they're easy to find and clean up.
@@ -36,6 +40,6 @@ Build a reproducible mitochondrial variant + haplotype pipeline for *Fundulus he
 
 - `SSM_WGS_list.txt`: one sample id per line, e.g. `10_0`, `102_0`, `1_0`.
 - Raw fastq names: `{sample}_1.fq.gz`, `{sample}_2.fq.gz`.
-- Trimmed paired: `{sample}_1_p.fq.gz`, `{sample}_2_p.fq.gz` (and `*_up.fq.gz` for unpaired).
+- Trimmed paired (actual files in `trimmed_seq/` on Triton 2): `{sample}_1_val_1.fq.gz`, `{sample}_2_val_2.fq.gz` (Trim Galore output), with companion `{sample}_{1,2}.fq.gz_trimming_report.txt`. Note: `02_trim_pe.sh` in this repo is written for Trimmomatic naming (`_p` / `_up`); see CHANGELOG 2026-05-07 — reconcile if stage 02 is ever re-run.
 - MT BAMs: `{sample}_MT.bam` (+ `.bai`).
 - The trailing `_0` is stripped from sample names in the joint-call VCF (`bcftools reheader`).

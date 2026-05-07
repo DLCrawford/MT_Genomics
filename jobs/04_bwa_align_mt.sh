@@ -2,7 +2,9 @@
 ###############################################################################
 # 04_bwa_align_mt.sh
 # Stage : MT alignment (bwa mem | samtools view | samtools sort), then index
-# Input : $TRIM_DIR/{sample}_1_p.fq.gz, {sample}_2_p.fq.gz   (paired trimmed)
+# Input : $TRIM_DIR/{sample}_1_val_1.fq.gz, {sample}_2_val_2.fq.gz
+#         (Trim Galore paired output naming — NOT Trimmomatic _p/_up; see
+#         CLAUDE.md "Sample / sample-list conventions" and CHANGELOG 2026-05-07.)
 #         $REF (Fhet_MT.fasta — must be bwa+samtools-indexed first; see docs)
 # Output: $BAMS_DIR/{sample}_MT.bam + {sample}_MT.bam.bai
 # Notes : Reference indexing is a one-time login-node step:
@@ -28,15 +30,14 @@ module load anaconda3
 source /projectnb/dcrawford/MT_Genomics2/jobs/config.sh
 conda activate "$CONDA_ENV"
 # $CONDA_ENV must provide: bwa, samtools
-
 ### ─── PER-TASK SETUP ──────────────────────────────────────────────────────
 THREADS=12
 mkdir -p "$BAMS_DIR"
 
 sample=$(sed -n "${LSB_JOBINDEX}p" "$SAMPLE_LIST")
 
-r1=$TRIM_DIR/${sample}_1_p.fq.gz
-r2=$TRIM_DIR/${sample}_2_p.fq.gz
+r1=$TRIM_DIR/${sample}_1_val_1.fq.gz
+r2=$TRIM_DIR/${sample}_2_val_2.fq.gz
 OUT_BAM=$BAMS_DIR/${sample}_MT.bam
 
 if [[ ! -f "$r1" || ! -f "$r2" ]]; then
