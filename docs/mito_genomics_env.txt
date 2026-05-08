@@ -1,0 +1,45 @@
+# packages in environment at /projectnb/triton/home/dcrawford/.conda/envs/mito_genomics:
+#
+# Name                    Version                   Build  Channel
+_libgcc_mutex             0.1                        main  
+_openmp_mutex             5.1                       1_gnu  
+bcftools                  1.6.0           pl522h2fd2069_0    biobuilds
+bwa                       0.7.17               h488b430_2    biobuilds
+bzip2                     1.0.8                h7b6447c_0  
+c-ares                    1.19.1               hf118e41_0  
+ca-certificates           2023.08.22           h6ffa863_0  
+curl                      8.2.1                h049c6bf_0  
+expat                     2.5.0                h4a02239_0  
+gdbm                      1.18                 h282d59f_4  
+gettext                   0.21.0               hb01ad79_1  
+git                       2.40.1          pl5340h08f2dee_1  
+htslib                    1.6                  h634551b_0  
+icu                       73.1                 h4a02239_0  
+krb5                      1.20.1               hd1e490d_1  
+ld_impl_linux-ppc64le     2.38                 hec883e6_1  
+libcurl                   8.2.1                h1c46003_0  
+libedit                   3.1.20221030         hf118e41_0  
+libev                     4.33                 h140841e_1  
+libffi                    3.4.4                h4a02239_0  
+libgcc-ng                 11.2.0               h1234567_1  
+libgomp                   11.2.0               h1234567_1  
+libnghttp2                1.52.0               hdc06bef_1  
+libssh2                   1.10.0               h049c6bf_2  
+libstdcxx-ng              11.2.0               h1234567_1  
+libuuid                   1.41.5               hf118e41_0  
+libxml2                   2.10.4               h18e3229_1  
+ncurses                   6.4                  h4a02239_0  
+openssl                   1.1.1w               h140841e_0  
+pcre2                     10.42                h280155c_0  
+perl                      5.34.0               hf118e41_2  
+pip                       26.0.1             pyhc872135_1  
+python                    3.11.5               hf689259_0  
+readline                  8.2                  hf118e41_0  
+samtools                  1.6.0                hf819497_0    biobuilds
+setuptools                68.0.0          py311h6ffa863_0  
+sqlite                    3.41.2               hf118e41_0  
+tk                        8.6.12               h7e00dab_0  
+tzdata                    2026a                he532380_0  
+wheel                     0.41.2          py311h6ffa863_0  
+xz                        5.4.2                hf118e41_0  
+zlib                      1.2.13               hf118e41_0  
