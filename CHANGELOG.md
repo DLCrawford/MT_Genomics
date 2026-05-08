@@ -2,6 +2,19 @@
 
 Session-by-session record of what changed.
 
+## 2026-05-08 — conda env fix, git branch cleanup, BAM validation started
+
+- **conda env fixed**: `samtools 1.6` was linked against `htslib 1.2.1` (biobuilds ABI mismatch — `libhts.so.2` missing). Removed both, reinstalled `samtools=1.6`, `htslib=1.6`, `bcftools=1.6` from biobuilds. bioconda not usable on `linux-ppc64le`. Both tools now verify (`samtools --version`, `bcftools --version` each report 1.6).
+- **SnpEff note**: not available via conda on ppc64le. Stage 06 must use a standalone JAR (`java -jar snpEff.jar`), not a conda install.
+- **Conda env snapshot**: `conda list -n mito_genomics > docs/mito_genomics_env.txt` — committed to repo for reproducibility.
+- **Git branch cleanup**: Triton 2 local branch was `master`, not `main`. Renamed to `main`, pushed, deleted stray `master` from GitHub. Triton 2 and Mac now both track `origin/main`.
+- **BAM validation complete**: `samtools quickcheck` across all 144 BAMs — one failure: `1_0_MT.bam` (no index, forward-read-only sample already on drop list). 143 BAMs clean. Per-BAM mapped-fraction sweep (`samtools idxstats`) confirmed 0.04–0.54% MT mapping across all 143 usable samples — low but expected for WGS aligned to the 16 kb MT genome only (unmapped nuclear reads retained in BAMs). Results logged to `logs/bam_mapfrac_20260508.txt`.
+- **Next-session pickup (in order):**
+  1. `mv bams/MT_bam_sam/*.bam bams/MT_bam_sam/*.bai bams/ && rmdir bams/MT_bam_sam` to match `BAMS_DIR`.
+  3. Patch and submit stage 05 (`05_bcftools_mpileup_call_AD.sh`) for joint call across all BAMs.
+  4. Write stage 06 (SnpEff annotation via standalone JAR using `$GFF`).
+  5. Write stage 07 (CDS-restrict + SNPs-only + `bcftools norm -m -any`) → produces canonical `Fhet_MT_CDS.snps.split.vcf.gz`.
+
 ## 2026-05-07 — Inventory, recovery from Mac backup, partly-consolidated config
 
 - Discovered `jobs/config.sh` LEGACY paths no longer match Triton 2 reality. Wrote `docs/inventory_2026-05-07.txt` enumerating what actually exists. Findings:

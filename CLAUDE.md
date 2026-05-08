@@ -15,12 +15,11 @@ Build a reproducible mitochondrial variant + haplotype pipeline for *Fundulus he
   - SnpEff annotation (when added)
   - `bcftools norm -m -any` (split multiallelic sites)
   - Final canonical output: `Fhet_MT_CDS.snps.split.vcf.gz` ← FROZEN once produced, do not rerun.
-    Status 2026-05-07: previous instance still unaccounted for, but upstream
-    144 MT BAMs were located at `bams/MT_bam_sam/` (not lost — just nested one
-    level). Pending env fix + BAM validation; if valid, regeneration starts at
-    stage 05 (joint call) → 06 (SnpEff, to write) → 07 (CDS+SNPs+norm, to write),
-    skipping a stage 04 rerun. The newly produced file then becomes the frozen
-    canonical going forward. See CHANGELOG 2026-05-07 for full pickup order.
+    Status 2026-05-08: conda env fixed (samtools/htslib/bcftools all 1.6 from biobuilds).
+    BAM validation in progress (`samtools quickcheck` + mapped-fraction sweep across 144
+    BAMs in `bams/MT_bam_sam/`). If valid, next steps: mv BAMs to `bams/`, run stage 05
+    (joint call), write + run stage 06 (SnpEff — standalone JAR, not conda; ppc64le),
+    write + run stage 07 (CDS+SNPs+norm). See CHANGELOG 2026-05-08.
 
 - **Mac (local)** — fast iteration:
   - Python haplotype parsing
@@ -30,7 +29,7 @@ Build a reproducible mitochondrial variant + haplotype pipeline for *Fundulus he
 
 ## Rules for Claude
 
-1. **Don't rerun frozen outputs.** `Fhet_MT_CDS.snps.split.vcf.gz` is canonical *once produced*. Build downstream analysis on top of it. (Status 2026-05-07: previous instance still missing; upstream BAMs recovered at `bams/MT_bam_sam/`; partial rerun planned starting at stage 05 once env is fixed — see CHANGELOG.)
+1. **Don't rerun frozen outputs.** `Fhet_MT_CDS.snps.split.vcf.gz` is canonical *once produced*. Build downstream analysis on top of it. (Status 2026-05-08: env fixed; BAM validation in progress; rerun starts at stage 05 if BAMs are valid — see CHANGELOG.)
 2. **Don't commit data files.** `.gitignore` excludes `*.vcf.gz`, `*.bcf`, `*.bam`, `*.bai`, `*.fastq*`, `*.fasta`, `*.tbi`, `*.csi`. Scripts and docs only.
 3. **All BSUB scripts live under `jobs/`** with the numbered prefix (`01_..05_..`). New stages get the next number.
 4. **All log files write to `/projectnb/dcrawford/MT_Genomics2/logs/`** so they're easy to find and clean up.
