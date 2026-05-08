@@ -67,20 +67,21 @@ ADAPTERS=/home/dcrawford/software/local/Trimmomatic-0.39/adapters/CombinedAdapte
 # If you install trimmomatic via conda instead, comment the two lines above and
 # call `trimmomatic PE ...` directly in 02_trim_pe.sh.
 
-# ── Conda env (override if you split tools across envs) ──────────────────────
+# ── Conda module + environment ────────────────────────────────────────────────
+# Confirmed 2026-05-08:
+#   base  : /sw/summit/software/linux-power9le/anaconda3-2023.09-0-...  (read only)
+#   env   : /projectnb/triton/home/dcrawford/.conda/envs/mito_genomics
+# The env is user-level (.conda/envs/) and is found by conda once the right
+# base module is loaded.
+CONDA_MODULE=anaconda3/2023.09-0-none-none-oawyzwj
 CONDA_ENV=mito_genomics
 
-# ── Initialize conda shell hooks ─────────────────────────────────────────────
-# Without this, BSUB scripts on compute nodes hit:
-#   "conda: error: argument COMMAND: invalid choice: 'activate'"
-# because `module load anaconda3` puts conda in PATH but doesn't register
-# the `conda activate` shell function. Each script sources this file before
-# calling `conda activate "$CONDA_ENV"`, so this line propagates the fix
-# to all stages. Safe on login nodes too (it's a no-op if already initialized).
-if [[ -z "${CONDA_SHLVL:-}" ]]; then
-    # `conda info --base` works without shell hooks (it's a regular subcommand).
-    source "$(conda info --base)/etc/profile.d/conda.sh"
-fi
+# Load conda and register shell hooks so `conda activate` works on compute nodes.
+# `module load` puts conda in PATH but does not register the activate shell
+# function; `eval "$(conda shell.bash hook)"` does that for modern conda (>=4.4).
+# Sourcing config.sh propagates this to every BSUB script automatically.
+module load "$CONDA_MODULE"
+eval "$(conda shell.bash hook)"
 
 # ── Make sure logs directory exists (idempotent) ─────────────────────────────
 mkdir -p "$LOGS_DIR"

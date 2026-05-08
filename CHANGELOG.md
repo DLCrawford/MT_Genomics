@@ -2,6 +2,49 @@
 
 Session-by-session record of what changed.
 
+## 2026-05-08 (session 4) — conda activation fix confirmed and finalised
+
+- **Root cause confirmed:** `conda info` on login node revealed:
+  - base: `anaconda3-2023.09` at `/sw/summit/software/linux-power9le/anaconda3-2023.09-0-...` (read only)
+  - env: `/projectnb/triton/home/dcrawford/.conda/envs/mito_genomics` (user-level)
+  - `module load anaconda3` (unversioned) was likely resolving ambiguously or not registering shell hooks on compute nodes.
+- **`jobs/config.sh`** updated: added `CONDA_MODULE=anaconda3/2023.09-0-none-none-oawyzwj`; config.sh now runs `module load "$CONDA_MODULE"` + `eval "$(conda shell.bash hook)"` directly, so every BSUB script that sources config.sh gets correct conda activation automatically.
+- **All 5 BSUB scripts** (`01`–`05`): removed `module load anaconda3` (now in config.sh); reverted `source activate` back to `conda activate "$CONDA_ENV"` (correct for modern conda once hooks are registered).
+- **Next:** `git pull origin main && bsub < jobs/05_bcftools_mpileup_call_AD.sh` on Triton 2.
+
+## 2026-05-08 (session 3) — haplotype calling design settled; scripts/08 written
+
+- **Haplotype calling design finalised:**
+  - Calling rule: `AD_alt / DP > 0.7` → 1 (alt); ≤ 0.7 → 0 (ref); no data → '.' → 0.
+  - Split-site imputation: '.' → 0 uniformly. At split rows, '.' = "doesn't have this specific allele" = 0. For the minor alt (V2) row, C-carriers and ref individuals both get 0, not a copy of the dominant-row call. This keeps columns orthogonal and semantically precise (2847_T/A=1 means specifically "has T→A", not "has any alt at 2847").
+  - Never-called rows (all zeros after imputation, e.g. T→G when no individual had G) are dropped.
+  - Haplotype string: "C_" + concatenated 0/1 across all retained sites in VCF order.
+- **`scripts/06_snpeff_mac.sh`** — fixed SnpEff path (`~/SnpEff/`) and database name (`NC_012312.1` with Vertebrate_Mitochondrial codon table). Added chromosome name pre-flight check and commented rename block in case FASTA header doesn't match NC_012312.1.
+- **`scripts/08_call_haplotypes.py`** — new Python script (cyvcf2 + pandas). Parses VCF, applies AD threshold, imputes '.' → 0, drops never-called rows, writes `vcf/haplotype_matrix.csv` (sites × samples) and `vcf/haplotype_calls.csv` (sample → haplotype string + N_alt_sites). Excludes samples 70 and 125 (no phenotypes).
+- **Next-session pickup (in order):**
+  1. Check FASTA header: `grep "^>" Missing_Files/SSM_MT_ref/Fhet_MT.fasta | head -1` — must be `NC_012312.1` for SnpEff to annotate. Patch stage 06 rename block if not.
+  2. Wait for stage 05 to finish on Triton 2, then rsync VCF to Mac `vcf/`.
+  3. `bash scripts/06_snpeff_mac.sh` → annotated VCF.
+  4. `bash scripts/07_cds_snps_norm_mac.sh` → canonical `Fhet_MT_CDS.snps.split.vcf.gz`.
+  5. `pip install cyvcf2 pandas --break-system-packages` if not already installed on Mac.
+  6. `python scripts/08_call_haplotypes.py` → haplotype matrix + calls.
+
+## 2026-05-08 (session 2) — stages 06 + 07 rewritten as Mac scripts; stage 05 submitted
+
+- **BAM move complete (Triton 2):** `bams/MT_bam_sam/` promoted to `bams/` — confirmed 144 BAMs at top level. `bam_list.txt` generated with 143 entries (1_0 excluded). Stage 05 submitted.
+- **SnpEff platform decision:** SnpEff cannot be built on Triton 2 (linux-ppc64le). SnpEff `Fhet_MT` database already exists on Mac (and Pegasus2). VCF from stage 05 is small enough to annotate locally. Stages 06 + 07 moved to Mac.
+- **`jobs/06_snpeff_annotate.sh`** — replaced with a tombstone (exit 1) redirecting to `scripts/06_snpeff_mac.sh`.
+- **`jobs/07_cds_snps_norm.sh`** — replaced with a tombstone (exit 1) redirecting to `scripts/07_cds_snps_norm_mac.sh`.
+- **`scripts/06_snpeff_mac.sh`** — new Mac bash script. Downloads `Fhet_mt_variantsAD.vcf.gz` from Triton 2 via rsync (recipe in header), then runs `java -jar snpEff.jar ann Fhet_MT ... | bcftools view -Oz`. Update `SNPEFF_JAR` path if Mac install differs from `~/software/snpEff/`.
+- **`scripts/07_cds_snps_norm_mac.sh`** — new Mac bash script. CDS restrict (awk GFF → bgzip/tabix regions) + `bcftools view -v snps` + `bcftools norm -m -any -f REF` → canonical `Fhet_MT_CDS.snps.split.vcf.gz`. Uses `Missing_Files/SSM_MT_ref/` for REF + GFF. No bedtools required.
+- **`docs/01_pipeline.md`** — pipeline diagram and stage sections updated to reflect Mac-side 06 + 07.
+- **Next-session pickup (in order):**
+  1. Wait for stage 05 (`fhet_mpileup_AD`) to finish on Triton 2: `bjobs` or check `logs/05_mpileup_AD_*.out`.
+  2. `rsync` `Fhet_mt_variantsAD.vcf.gz` (+ `.csi`) from Triton 2 → Mac `vcf/` — command in `docs/01_pipeline.md §06`.
+  3. `bash scripts/06_snpeff_mac.sh` — SnpEff annotation on Mac.
+  4. `bash scripts/07_cds_snps_norm_mac.sh` → canonical `vcf/Fhet_MT_CDS.snps.split.vcf.gz`.
+  5. Begin Mac-side Python haplotype parsing.
+
 ## 2026-05-08 — conda env fix, git branch cleanup, BAM validation started
 
 - **conda env fixed**: `samtools 1.6` was linked against `htslib 1.2.1` (biobuilds ABI mismatch — `libhts.so.2` missing). Removed both, reinstalled `samtools=1.6`, `htslib=1.6`, `bcftools=1.6` from biobuilds. bioconda not usable on `linux-ppc64le`. Both tools now verify (`samtools --version`, `bcftools --version` each report 1.6).

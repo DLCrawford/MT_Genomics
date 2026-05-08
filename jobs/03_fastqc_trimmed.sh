@@ -23,7 +23,7 @@
 set -euo pipefail
 
 ### ─── LOAD ENVIRONMENT + CONFIG ───────────────────────────────────────────
-module load anaconda3
+# module load + conda shell hook are handled inside config.sh
 source /projectnb/dcrawford/MT_Genomics2/jobs/config.sh
 conda activate "$CONDA_ENV"
 # $CONDA_ENV must provide: fastqc, multiqc
