@@ -4,6 +4,46 @@
 
 Build a reproducible mitochondrial variant + haplotype pipeline for *Fundulus heteroclitus*, with heavy compute on Triton 2 (LSF/BSUB) and downstream analysis on Doug's Mac.
 
+## Active primary task — variant-count discrepancy (added 2026-05-09 session 6)
+
+**Why does the same stage-05 pipeline produce 152 SNPs in one parameter
+configuration and ~950 in another, and how do other investigators avoid
+the trap?** This is now a *primary* project deliverable, not an incidental
+bug fix. The 152-vs-~950 gap is qualitative: at 152 SNPs all downstream
+haplotype and population-structure inferences would change; at ~950 only
+minor revisions are needed and the overall scientific picture stands.
+Whichever number proves correct, we owe ourselves and the community a
+written record of *what went wrong, why, and how to avoid it*.
+
+What we need to deliver, in order:
+
+1. **Definitive call-set choice.** Pick which of v1 (strict, 152), v2
+   (-Q 13 -q 20 --ploidy 1), or v3 (-Q 13 -q 0 --ploidy 1) is the
+   biologically correct call set for *F. heteroclitus* mtDNA, with the
+   evidence (Ts/Tv per allele rank, AF spectrum, singleton rate, agreement
+   with prior canonical pipeline) that justifies the choice.
+
+2. **Mechanism write-up.** Explain *which* parameter(s) of
+   `bcftools mpileup | bcftools call` caused the gap, in enough mechanistic
+   detail that someone reading the bcftools defaults can predict the
+   failure mode without rerunning a sweep. Working hypotheses to confirm
+   or refute: default `--ploidy 2` on a haploid genome (het-likelihood
+   gating drops real homoplasmic sites); `-q 30` mapping-quality filter
+   removing legitimate MT reads; interaction between `-A` and the
+   multiallelic caller producing phantom alts that mask real signal in
+   downstream stats.
+
+3. **Practical checklist.** A short "what to set on mtDNA when calling with
+   bcftools" recipe other investigators can drop into their pipeline
+   without re-deriving from scratch. Likely lives in `docs/` once the
+   diagnostic runs land.
+
+The v2 + v3 diagnostic re-runs (`jobs/05b_*.sh`, `jobs/05c_*.sh`,
+submitted 2026-05-09) are the experimental basis for items 1–2. Run
+manifests (`vcf/*_run_manifest.txt`) plus the comparison helper
+(`scripts/compare_stage05_runs.sh`) are the artifacts; the deliverable
+prose draws on those plus the existing `Fhet_mt_*_stats.txt` for v1.
+
 ## Compute split
 
 - **HPC (Triton 2, LSF)** — anything heavy:

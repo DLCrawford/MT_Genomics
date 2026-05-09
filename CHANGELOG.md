@@ -2,7 +2,17 @@
 
 Session-by-session record of what changed.
 
-## 2026-05-09 (session 6) — Stage 05 strict run produced 152 SNPs vs ~950 expected; diagnostic v2 + v3 re-runs prepared
+## 2026-05-09 (session 6) — Stage 05 strict run produced 152 SNPs vs ~950 expected; diagnostic v2 + v3 re-runs prepared; understanding the discrepancy elevated to a primary project task
+
+> **Primary task elevation:** Understanding *why* the same pipeline produces
+> 152 vs ~950 SNPs, and writing it up so other investigators can avoid the
+> trap, is now a primary project deliverable — not an incidental bug fix.
+> See the new "Active primary task" section in CLAUDE.md. The gap is
+> qualitative: at 152 SNPs all downstream haplotype/population inferences
+> would change; at ~950 only minor revisions are needed. The diagnostic
+> runs below are the experimental basis for the methods write-up that owes
+> the broader community.
+
 
 - **Stage 05 v1 (strict) finished cleanly but undershot by ~6×.** Job 7672 ran
   to completion: `=== DONE ===` in stdout, max memory 371 MB of 16 GB
