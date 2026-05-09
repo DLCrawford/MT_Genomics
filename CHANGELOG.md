@@ -2,6 +2,108 @@
 
 Session-by-session record of what changed.
 
+## 2026-05-09 (session 6) — Stage 05 strict run produced 152 SNPs vs ~950 expected; diagnostic v2 + v3 re-runs prepared
+
+- **Stage 05 v1 (strict) finished cleanly but undershot by ~6×.** Job 7672 ran
+  to completion: `=== DONE ===` in stdout, max memory 371 MB of 16 GB
+  requested, runtime 33,287 s (9h 15m) of the 72h wall budget, no errors,
+  no warnings other than the diploid-default note from `bcftools call`.
+  `bcftools stats vcf/Fhet_mt_fullAD.vcf.gz` reports 153 records / 152 SNPs /
+  1 indel across 143 samples.
+- **Truncation hypothesis ruled out.** Variant POS spans 5 → 16,500 across a
+  16,526 bp reference (`refs/Fhet_MT.fasta.fai`). The whole mitogenome was
+  scanned; the 152 SNPs is the real call set under the v1 parameters
+  (`-Q 30 -q 30 --ploidy 2 (default)`), not a partial output.
+- **Diagnosis from the stats file:**
+  - 145/152 SNP sites are multiallelic (96%). Per-site Ts/Tv = 0.51 across
+    all alts but Ts/Tv = 5.61 considering only the 1st (most-common) alt at
+    each site. Pattern: real biological variation at the dominant alt,
+    sequencing-error noise at the secondary alts that `-A` retains in the
+    record (327 alts have AF=0, i.e. zero carriers).
+  - Per-site DP > 500 at 100% of called sites — coverage is not the limit.
+  - 51 singleton SNPs is low for 143 unrelated *F. heteroclitus* across the
+    full mitogenome; rare-allele detection appears compressed.
+- **Why the gap is most likely calling parameters, not data:**
+  - User confirms historical canonical run had ~950 SNP sites with QUAL ≥ 30
+    at 95%+ of sites — i.e., per-site call confidence was not the limit
+    historically; the difference must therefore be in which sites cross the
+    variant-calling threshold at all.
+  - `-Q 30 -q 30` filters reads BEFORE the per-site likelihood is computed,
+    so they shape which sites get emitted. `--ploidy 2` (default) on a
+    haploid genome can fail the het-likelihood gate at heteroplasmic or
+    low-AF carrier sites.
+- **Diagnostic re-runs prepared (all results preserved side-by-side):**
+  - **`scripts/run_stage05_core.sh`** — new parametrized core. Takes
+    `RUN_TAG MIN_BQ MIN_MQ PLOIDY` as positional args; writes outputs as
+    `Fhet_mt_${RUN_TAG}_*` and a self-documenting `_run_manifest.txt`
+    capturing parameters, host, job ID, bcftools version, BAM count, and
+    a post-run summary (n_records, n_SNPs, ts/tv). Manifests give other
+    investigators the exact recipe behind each result.
+  - **`jobs/05b_v2_Q13_q20_p1.sh`** — BSUB wrapper, runs the core with
+    `-Q 13 -q 20 --ploidy 1` (relaxed read filters + haploid). RUN_TAG:
+    `v2_Q13_q20_p1`.
+  - **`jobs/05c_v3_Q13_q00_p1.sh`** — BSUB wrapper, runs the core with
+    `-Q 13 -q 0 --ploidy 1` (no MAPQ filter; matches the archived
+    per-sample caller's defaults for an apples-to-apples comparison).
+    RUN_TAG: `v3_Q13_q00_p1`.
+  - Both wrappers leave the v1 strict outputs untouched; LSF resources match
+    the v1 run since v1's profile shows headroom (16 GB / 8 cores / 96h
+    wall clock — bumped from 72h for safety).
+  - **`scripts/compare_stage05_runs.sh`** — new helper. Takes any number of
+    `*_stats.txt` files and prints a side-by-side fixed-width comparison of
+    sample count, record/SNP/indel/multiallelic counts, both Ts/Tv flavors,
+    and singletons. Run after both jobs finish.
+- **Misleading comments fixed in the new core.** The original script said
+  `-A in bcftools call means: keep all positions (not just variants)`. That
+  is incorrect — `-A` keeps all alternate alleles at variant sites, but the
+  output is still variant-only because of `-mv`. The new core has the right
+  comment and notes that `_fullAD` is a historical filename (downstream
+  scripts still use it).
+- **Submission (Triton 2):**
+  ```
+  cd /projectnb/dcrawford/MT_Genomics2
+  git pull
+  bsub < jobs/05b_v2_Q13_q20_p1.sh
+  bsub < jobs/05c_v3_Q13_q00_p1.sh
+  ```
+- **Decision tree once both jobs finish:**
+  - `bash scripts/compare_stage05_runs.sh vcf/Fhet_mt_fullAD_stats.txt vcf/Fhet_mt_v2_*_fullAD_stats.txt vcf/Fhet_mt_v3_*_fullAD_stats.txt`
+  - If v2 ≈ 950: ploidy + per-base quality filter were the issue; adopt
+    v2 as canonical, document the bug, proceed to 06/07/08.
+  - If v2 still low but v3 ≈ 950: gap localizes to MAPQ filtering. Adopt
+    v3 (or v2 with `-q 10`) as canonical.
+  - If both v2 and v3 still ≈ 150: gap is upstream of stage 05 — investigate
+    BAM provenance (whether duplicates were marked in the historical pipeline,
+    whether trimming defaults differ, etc.).
+- **Why this matters for the science write-up:** the difference between
+  152 and ~950 SNPs is not cosmetic — at 152, downstream haplotype calls and
+  population-structure inferences would change qualitatively. Whichever
+  number proves correct, the run manifests + this CHANGELOG entry document
+  exactly what was tried and why, so other investigators using
+  `bcftools mpileup | bcftools call` on mtDNA can avoid the
+  default-diploid + strict-MAPQ trap.
+
+## 2026-05-08 (session 5) — Mac-side scripts patched; stage-05 verification script added
+
+- **Stage 05 status**: still running on Triton 2 as of this session (submitted 11:32 AM). Ploidy warning ("assuming all sites are diploid") is benign — downstream haplotype caller uses `AD_alt/DP > 0.7` and ignores GT entirely. Long runtime explained by 143 × 15–19 GB BAMs (high I/O; unmapped reads retained in BAMs from stage 04).
+- **`scripts/06_snpeff_mac.sh` patched** — previous version had three wrong values:
+  - `SNPEFF_DIR` was `~/SnpEff/` (uppercase, non-existent) → corrected to `~/snpEff/`
+  - `SNPEFF_JAR` was `~/SnpEff/snpEff.jar` → corrected to `~/micromamba/envs/SNP_env/share/snpeff-5.2-1/snpEff.jar` (per `My_previous_SNPeff.txt`)
+  - `DB_NAME` was `NC_012312.1` (NCBI pre-built, doesn't exist) → corrected to `Fhet_MT` (custom database built from `genes.gff` + `sequences.fa` under `~/snpEff/data/Fhet_MT/`)
+  - Added `cd "$SNPEFF_DIR"` before java call so snpEff resolves relative `data/` paths correctly
+  - Removed the chromosome rename block (not needed: VCF CHROM = `NC_012312.1` matches Fhet_MT database sequences)
+  - Improved pre-flight error messages with remediation hints
+- **`scripts/07_cds_snps_norm_mac.sh` patched** — added pre-flight check that creates `Fhet_MT.fasta.fai` via `samtools faidx` if absent (required by `bcftools norm -f REF`)
+- **`scripts/verify_stage05.sh` — new script** — run on Triton 2 once stage-05 log shows `=== DONE ===`. Checks: file exists, CSI index present, bcftools can read without error, 143 samples, chromosome `NC_012312.1`, FORMAT/AD + FORMAT/DP present, SNP count in plausible range (50–5000). Prints the rsync commands on all-pass.
+- **Next-session pickup (in order):**
+  1. On Triton 2: `tail logs/05_mpileup_AD_*.out` — wait for `=== DONE ===`
+  2. On Triton 2: `bash scripts/verify_stage05.sh` — must show 0 failures
+  3. rsync VCF + CSI to Mac `vcf/` (commands printed by verify script)
+  4. On Mac: `bash scripts/06_snpeff_mac.sh`
+  5. On Mac: `bash scripts/07_cds_snps_norm_mac.sh` → canonical `vcf/Fhet_MT_CDS.snps.split.vcf.gz`
+  6. On Mac: `pip install cyvcf2 pandas --break-system-packages` (if not already installed)
+  7. On Mac: `python scripts/08_call_haplotypes.py` → haplotype matrix + calls
+
 ## 2026-05-08 (session 4) — conda activation fix confirmed and finalised
 
 - **Root cause confirmed:** `conda info` on login node revealed:
@@ -10,7 +112,14 @@ Session-by-session record of what changed.
   - `module load anaconda3` (unversioned) was likely resolving ambiguously or not registering shell hooks on compute nodes.
 - **`jobs/config.sh`** updated: added `CONDA_MODULE=anaconda3/2023.09-0-none-none-oawyzwj`; config.sh now runs `module load "$CONDA_MODULE"` + `eval "$(conda shell.bash hook)"` directly, so every BSUB script that sources config.sh gets correct conda activation automatically.
 - **All 5 BSUB scripts** (`01`–`05`): removed `module load anaconda3` (now in config.sh); reverted `source activate` back to `conda activate "$CONDA_ENV"` (correct for modern conda once hooks are registered).
-- **Next:** `git pull origin main && bsub < jobs/05_bcftools_mpileup_call_AD.sh` on Triton 2.
+- **Confirmed working:** `bash -c "source jobs/config.sh && conda activate mito_genomics && bcftools --version"` prints `bcftools 1.6 / htslib 1.6` on Triton 2 login node. Stage 05 submitted successfully.
+- **Next-session pickup (in order):**
+  1. Check stage 05 complete: `bjobs` / `tail logs/05_mpileup_AD_*.out` — look for `=== DONE ===`.
+  2. `bcftools stats vcf/Fhet_mt_variantsAD.vcf.gz | grep "^SN"` — confirm 143 samples, reasonable SNP count.
+  3. `rsync` `Fhet_mt_variantsAD.vcf.gz` + `.csi` from Triton 2 → Mac `vcf/`.
+  4. `bash scripts/06_snpeff_mac.sh` — SnpEff annotation on Mac.
+  5. `bash scripts/07_cds_snps_norm_mac.sh` → canonical `vcf/Fhet_MT_CDS.snps.split.vcf.gz`.
+  6. `pip install cyvcf2 pandas` (if not already on Mac), then `python scripts/08_call_haplotypes.py`.
 
 ## 2026-05-08 (session 3) — haplotype calling design settled; scripts/08 written
 

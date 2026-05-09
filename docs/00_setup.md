@@ -18,12 +18,15 @@ ssh-keygen -t ed25519 -C dcrawford@miami.edu -f ~/.ssh/mito_gen_key
 cat > ~/.ssh/config << 'EOF'
 Host github.com
     IdentityFile ~/.ssh/mito_gen_key
+    IdentitiesOnly yes
     User git
 EOF
 
 chmod 600 ~/.ssh/mito_gen_key ~/.ssh/config
 chmod 700 ~/.ssh
 ```
+
+`IdentitiesOnly yes` forces ssh to offer ONLY `mito_gen_key` to github.com. Without it, ssh will offer every key in your agent first and GitHub may rate-limit the connection before it ever reaches the right key — manifests as `Permission denied (publickey)` even though the key is registered.
 
 Add `~/.ssh/mito_gen_key.pub` to GitHub → *Settings → SSH and GPG Keys → New SSH key* (title: `mito_gen_key`).
 
@@ -101,6 +104,74 @@ mkdir -p /projectnb/dcrawford/MT_Genomics2/logs
 ```
 
 All `jobs/*.sh` write `.out` / `.err` here.
+
+## 7. Mac-side setup (one-time, parallel to §1–§4)
+
+The Mac mirror at `~/Projects/MT_Genomics_Cl_Ap2026/MT_Genomics2/` is its own git checkout (not just an rsync target). Both Mac and Triton 2 push/pull against `git@github.com:DLCrawford/MT_Genomics.git`.
+
+### 7a. SSH key for GitHub (Mac)
+
+Check whether you already have a key:
+```bash
+ls -la ~/.ssh/
+cat ~/.ssh/id_ed25519.pub 2>/dev/null
+```
+
+If a key exists and you'd rather use it: copy its `.pub` line into github.com → *Settings → SSH and GPG Keys → New SSH key* (label, e.g., `MAC_mito_gen_key`). If not, generate one:
+```bash
+ssh-keygen -t ed25519 -C dcrawford@miami.edu -f ~/.ssh/id_ed25519
+chmod 700 ~/.ssh
+chmod 600 ~/.ssh/id_ed25519
+cat ~/.ssh/id_ed25519.pub          # paste this into GitHub
+```
+
+Verify:
+```bash
+ssh -T git@github.com
+# Expected: "Hi DLCrawford! You've successfully authenticated..."
+```
+
+### 7b. zsh comment behavior (only relevant on Mac)
+
+zsh does not treat `#` as a comment in interactive shells by default — pasting commented recipes will produce `zsh: command not found: #`. Fix once per session, or permanently in `~/.zshrc`:
+
+```bash
+setopt interactive_comments
+```
+
+### 7c. Bring the Mac directory under version control
+
+If the Mac project directory was created without `git init` (e.g., during a restructure), and the GitHub repo already has history that you want to preserve, clone the repo into a temp dir and graft its `.git/` into the Mac project. This avoids force-push and keeps history intact.
+
+```bash
+cd /tmp
+git clone git@github.com:DLCrawford/MT_Genomics.git mt_clone
+mv mt_clone/.git ~/Projects/MT_Genomics_Cl_Ap2026/MT_Genomics2/.git
+rm -rf /tmp/mt_clone
+
+cd ~/Projects/MT_Genomics_Cl_Ap2026/MT_Genomics2
+git config user.email "dcrawford@miami.edu"
+git config user.name  "DLCrawford"
+git config pull.rebase false
+
+git status                          # review: modified vs untracked vs deleted
+git add -A
+git commit -m 'Restructure: numbered BSUB scripts, jobs/config.sh, docs/'
+git push origin main
+```
+
+After the Mac push, on Triton 2:
+```bash
+cd /projectnb/dcrawford/MT_Genomics2
+git pull origin main
+```
+
+If Triton 2 has untracked or modified files that block the merge and Mac is authoritative:
+```bash
+git reset --hard HEAD                # drops tracked modifications
+git clean -fd -- docs jobs           # drops blocking untracked files in those folders
+git pull origin main
+```
 
 ## Per-session startup
 

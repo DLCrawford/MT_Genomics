@@ -1,0 +1,30 @@
+# where are the files for "pipeline_files.txt"
+
+I wrote notes in "pipline_file.txt" as "#> DLC...."
+Below is a summary
+$SAMPLE_LIST   /projectnb/dcrawford/SSM_WGS/SSM_WGS_list.txt
+	#> DLC  I created a directory in /Projects/MT_Genomics_Cl_Ap2026/MT_Genomics2 called "Missing_Files" and added WGS_list.txt   
+$BAM_LIST      /projectnb/dcrawford/SSM_Mito/new_hap_AD2/bam_list.txt
+	#> DLC we are going to re-run haplotype calls, this and SNPEff is where the previous errors (~1%) were created
+
+$RAW_DIR       /projectnb/dcrawford/SSM_WGS/fhet_raw_seq/
+	#> DLC NO Raw paired reads- these are in cold storage
+$TRIM_DIR      /projectnb/dcrawford/SSM_WGS/TrimA_seq/
+	#> DLC _1.fq.gz, _2.fq.gz... files in :: /projectnb/dcrawford/SSM_WGS/trimmed_seq
+
+$RAW_QC_DIR    /projectnb/dcrawford/SSM_WGS/fastqc_out/
+	#> DLC drop, the fastqc trimmed data (below) is sufficient. 
+
+$TRIM_QC_DIR   /projectnb/dcrawford/SSM_WGS/TrimA_fastqc_out/
+	#> DLC  files found in /projectnb/dcrawford/SSM_WGS/fastqc_TrimA
+
+Target : $PROJECT_ROOT/refs/Fhet_MT.fasta (+ .fai, .amb, .ann, .bwt, .pac, .sa)
+
+#> DLC that is curious, but a backup is on my Mac:: /Users/douglas_crawford/Projects/SSM_Mito_All/SSM_MT_ref
+#> the "SSM_MT_ref" directory with files was added to the "Missing_File" in /Projects/MT_Genomics_Cl_Ap2026/MT_Genomics2
+
+$BAMS_DIR      /projectnb/dcrawford/SSM_Mito/MT_bam_sam/
+  Type   : directory of sorted, indexed MT-only alignments.
+  Files  : {sample}_MT.bam       (×144 expected)
+           {sample}_MT.bam.bai
+#>DLC  Critical I cannot find these critical files. ? should we re-create (~24-32 hours depending on que)

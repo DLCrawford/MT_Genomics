@@ -23,6 +23,10 @@ logs/
 *.out
 *.err
 
+# Inventory snapshots — generated on Triton 2, conflict-prone if tracked.
+# Use `git add -f docs/inventory_YYYY-MM-DD.txt` if you ever want to commit one.
+docs/inventory_*.txt
+
 # Python
 __pycache__/
 *.pyc

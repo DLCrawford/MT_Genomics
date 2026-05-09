@@ -15,11 +15,15 @@ Build a reproducible mitochondrial variant + haplotype pipeline for *Fundulus he
   - SnpEff annotation (when added)
   - `bcftools norm -m -any` (split multiallelic sites)
   - Final canonical output: `Fhet_MT_CDS.snps.split.vcf.gz` ← FROZEN once produced, do not rerun.
-    Status 2026-05-08: conda env fixed (samtools/htslib/bcftools all 1.6 from biobuilds).
-    BAM validation in progress (`samtools quickcheck` + mapped-fraction sweep across 144
-    BAMs in `bams/MT_bam_sam/`). If valid, next steps: mv BAMs to `bams/`, run stage 05
-    (joint call), write + run stage 06 (SnpEff — standalone JAR, not conda; ppc64le),
-    write + run stage 07 (CDS+SNPs+norm). See CHANGELOG 2026-05-08.
+    Status 2026-05-09 (session 6): Stage 05 strict run completed (v1, -Q 30 -q 30
+    ploidy=2) but yielded only 152 SNPs vs ~950 expected. Logs show clean exit
+    (max mem 371 MB / 16 GB, runtime 9h / 72h budget) — NOT a truncation. Two
+    diagnostic re-runs prepared:
+      v2: jobs/05b_v2_Q13_q20_p1.sh  (-Q 13 -q 20 --ploidy 1)
+      v3: jobs/05c_v3_Q13_q00_p1.sh  (-Q 13 -q  0 --ploidy 1)
+    Both write to distinct RUN_TAG output prefixes so the v1 strict result is
+    preserved on disk for comparison. Compare with scripts/compare_stage05_runs.sh.
+    Next: bsub both → wait → compare → pick winner → rsync → 06 → 07 → 08.
 
 - **Mac (local)** — fast iteration:
   - Python haplotype parsing
@@ -29,7 +33,7 @@ Build a reproducible mitochondrial variant + haplotype pipeline for *Fundulus he
 
 ## Rules for Claude
 
-1. **Don't rerun frozen outputs.** `Fhet_MT_CDS.snps.split.vcf.gz` is canonical *once produced*. Build downstream analysis on top of it. (Status 2026-05-08: env fixed; BAM validation in progress; rerun starts at stage 05 if BAMs are valid — see CHANGELOG.)
+1. **Don't rerun frozen outputs.** `Fhet_MT_CDS.snps.split.vcf.gz` is canonical *once produced*. Build downstream analysis on top of it. (Status 2026-05-09 session 6: stage 05 v1 strict run produced 152 SNPs vs ~950 expected; v2 + v3 diagnostic re-runs queued. Canonical is not yet produced — see CHANGELOG.)
 2. **Don't commit data files.** `.gitignore` excludes `*.vcf.gz`, `*.bcf`, `*.bam`, `*.bai`, `*.fastq*`, `*.fasta`, `*.tbi`, `*.csi`. Scripts and docs only.
 3. **All BSUB scripts live under `jobs/`** with the numbered prefix (`01_..05_..`). New stages get the next number.
 4. **All log files write to `/projectnb/dcrawford/MT_Genomics2/logs/`** so they're easy to find and clean up.
