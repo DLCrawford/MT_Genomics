@@ -20,10 +20,11 @@ raw fastqs
 04_bwa_align_mt.sh ────────────────► bams/*_MT.bam            ← align to MT, sort, index
    │
    ▼
-05_bcftools_mpileup_call_AD.sh ────► vcf/Fhet_mt_*AD.vcf.gz  ← joint call (all vars, AD/DP)
-   │
+05d_persample_call.sh    ──────────► vcf/persample/{sample}_norm.vcf.gz   ← per-sample haploid call
+05e_merge_persample.sh   ──────────► vcf/Fhet_mt_persample_merged.vcf.gz  ← canonical joint VCF
+   │      (this pair replaces the joint-call 05/05b/05c — see docs/02_calling_architecture.md)
    ▼
-06_snpeff_annotate.sh ─────────────► vcf/Fhet_mt_variantsAD_ann.vcf.gz  ← ANN field
+06_snpeff_annotate.sh ─────────────► vcf/Fhet_mt_persample_merged_ann.vcf.gz  ← ANN field
    │
    ▼
 07_cds_snps_norm.sh ───────────────► vcf/Fhet_MT_CDS.snps.split.vcf.gz  ← CANONICAL ★
@@ -91,7 +92,76 @@ MultiQC roll-up after all tasks finish (same pattern as 01).
 
 > **Status 2026-05-08:** 144 canonical BAMs dated Jul 2025 recovered from `bams/MT_bam_sam/`. 143 passed `samtools quickcheck` (1_0_MT.bam excluded). BAMs moved to `bams/` to match `$BAMS_DIR`. Stage-04 rerun not needed.
 
-## 05 — Joint variant calling with AD
+## 05 — Variant calling (per-sample → merge)
+
+**Canonical scripts (use these):** `jobs/05d_persample_call.sh` (array)
+followed by `jobs/05e_merge_persample.sh` (single job).
+
+**Why this architecture:** the joint-call approach in `05/05b/05c` produced
+~150 SNPs vs the historical ~1133 because joint `bcftools call -mv`'s
+allele-frequency prior suppresses sites where the reference is the rare
+allele — which is most variable positions on this mtDNA panel against
+the divergent `NC_012312.1` reference. Per-sample call → `bcftools merge`
+matches the historical recipe and recovers the full signal. Full mechanism
+write-up in [`docs/02_calling_architecture.md`](02_calling_architecture.md).
+
+**Joint variants kept for the methods comparison:**
+`jobs/05_bcftools_mpileup_call_AD.sh` (v1, strict),
+`jobs/05b_v2_Q13_q20_p1.sh`, `jobs/05c_v3_Q13_q00_p1.sh`. These remain in
+`jobs/` as the experimental basis for the gap diagnosis; do not use them
+for the canonical pipeline.
+
+### 05d — per-sample call (array)
+
+**Script:** `jobs/05d_persample_call.sh`
+**Array:** `[1-143]%24` (one task per BAM in `$BAM_LIST`)
+**Inputs:**
+- `refs/Fhet_MT.fasta`
+- `bams/{sample}_MT.bam` for each line in `bam_list.txt`
+
+**Per-task pipeline:**
+```
+bcftools mpileup -f REF SAMPLE.bam -a AD,DP --max-depth 10000 -Ou \
+  | bcftools call -mv --ploidy 1 -Oz -o SAMPLE.vcf.gz
+bcftools index SAMPLE.vcf.gz
+bcftools norm -m -any -Oz -o SAMPLE_norm.vcf.gz SAMPLE.vcf.gz
+bcftools index SAMPLE_norm.vcf.gz
+```
+
+**Outputs:** `vcf/persample/{sample}.vcf.gz` and
+`vcf/persample/{sample}_norm.vcf.gz` (+ `.csi` indices).
+
+### 05e — merge
+
+**Script:** `jobs/05e_merge_persample.sh`
+**Not an array.** Run only after the 05d array finishes — the script
+pre-flights every `*_norm.vcf.gz` and exits non-zero if any are missing.
+
+**Pipeline:**
+```
+bcftools merge -m none --threads 8 -l input_list.txt -Oz -o Fhet_mt_persample_merged.vcf.gz
+bcftools reheader -s <(bcftools query -l ... | sed 's/_0$//') ...
+bcftools stats Fhet_mt_persample_merged.vcf.gz > Fhet_mt_persample_merged_stats.txt
+```
+
+**Outputs:**
+- `vcf/Fhet_mt_persample_merged.vcf.gz` — single VCF, sample names with `_0` stripped
+- `vcf/Fhet_mt_persample_merged_stats.txt` — `bcftools stats` summary
+- `vcf/Fhet_mt_persample_merged_run_manifest.txt` — parameters + provenance + summary
+
+**Target:** ~1133 SNPs / ts/tv ≈ 7.9, matching historical
+`stats_old/merged_stats.txt`. With 143 samples (vs historical 144) the
+count will run slightly lower.
+
+**Submit (in this order):**
+```bash
+cd /projectnb/dcrawford/MT_Genomics2
+bsub < jobs/05d_persample_call.sh
+# wait for the array to finish:  bjobs / tail logs/05d_persample_*_*.out
+bsub < jobs/05e_merge_persample.sh
+```
+
+### 05 (legacy joint) — kept for the methods comparison only
 
 **Script:** `jobs/05_bcftools_mpileup_call_AD.sh`
 **Not an array** — one job, all 143 BAMs at once.
@@ -140,12 +210,22 @@ This checks 143 samples, NC_012312.1 chromosome, AD/DP FORMAT fields, and SNP co
 **First: download the stage-05 VCF from Triton 2:**
 ```bash
 rsync -avP \
-  dcrawford@scc1.bu.edu:/projectnb/dcrawford/MT_Genomics2/vcf/Fhet_mt_variantsAD.vcf.gz \
+  dcrawford@scc1.bu.edu:/projectnb/dcrawford/MT_Genomics2/vcf/Fhet_mt_persample_merged.vcf.gz \
   ~/Projects/MT_Genomics_Cl_Ap2026/MT_Genomics2/vcf/
 rsync -avP \
-  dcrawford@scc1.bu.edu:/projectnb/dcrawford/MT_Genomics2/vcf/Fhet_mt_variantsAD.vcf.gz.csi \
+  dcrawford@scc1.bu.edu:/projectnb/dcrawford/MT_Genomics2/vcf/Fhet_mt_persample_merged.vcf.gz.csi \
   ~/Projects/MT_Genomics_Cl_Ap2026/MT_Genomics2/vcf/
 ```
+
+**Note:** stages 06 and 07 currently expect `Fhet_mt_variantsAD.vcf.gz` as
+their input filename (legacy from the joint-call pipeline). Either symlink:
+```bash
+cd ~/Projects/MT_Genomics_Cl_Ap2026/MT_Genomics2/vcf
+ln -sf Fhet_mt_persample_merged.vcf.gz     Fhet_mt_variantsAD.vcf.gz
+ln -sf Fhet_mt_persample_merged.vcf.gz.csi Fhet_mt_variantsAD.vcf.gz.csi
+```
+or update `INPUT` in `scripts/06_snpeff_mac.sh` / `scripts/07_cds_snps_norm_mac.sh`
+to point at `Fhet_mt_persample_merged.vcf.gz` directly.
 
 **Then run:**
 ```bash

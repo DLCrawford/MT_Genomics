@@ -4,45 +4,45 @@
 
 Build a reproducible mitochondrial variant + haplotype pipeline for *Fundulus heteroclitus*, with heavy compute on Triton 2 (LSF/BSUB) and downstream analysis on Doug's Mac.
 
-## Active primary task — variant-count discrepancy (added 2026-05-09 session 6)
+## Active primary task — variant-count discrepancy (added 2026-05-09 session 6; resolved at the diagnostic level 2026-05-10 session 7)
 
 **Why does the same stage-05 pipeline produce 152 SNPs in one parameter
-configuration and ~950 in another, and how do other investigators avoid
-the trap?** This is now a *primary* project deliverable, not an incidental
-bug fix. The 152-vs-~950 gap is qualitative: at 152 SNPs all downstream
-haplotype and population-structure inferences would change; at ~950 only
-minor revisions are needed and the overall scientific picture stands.
-Whichever number proves correct, we owe ourselves and the community a
-written record of *what went wrong, why, and how to avoid it*.
+configuration and ~1133 in another, and how do other investigators avoid
+the trap?** Resolution as of session 7: the gap is **architectural**, not
+parametric. The historical pipeline used per-sample `bcftools mpileup |
+bcftools call` followed by `bcftools merge` across all 144 samples; the
+current stage 05 (and v2/v3 diagnostic variants) use a single joint
+`bcftools call -mv` piped from a multi-BAM `bcftools mpileup`. The switch
+was made deliberately on collaborator advice to record per-sample AD/DP
+for downstream haplotype calling — the trade-off was just never quantified
+until now. Joint `-mv`'s default allele-frequency prior suppresses sites
+where the reference is the rare allele, which on this mtDNA panel against
+the divergent NC_012312.1 reference is most variable positions (1004 of
+1133 historical SNPs sit at AF ≥ 0.95). No amount of `-Q`/`-q`/`--ploidy`
+tuning recovers them — v1 (152), v2 (152), v3 (145) all converged.
 
-What we need to deliver, in order:
+Status of the three deliverables:
 
-1. **Definitive call-set choice.** Pick which of v1 (strict, 152), v2
-   (-Q 13 -q 20 --ploidy 1), or v3 (-Q 13 -q 0 --ploidy 1) is the
-   biologically correct call set for *F. heteroclitus* mtDNA, with the
-   evidence (Ts/Tv per allele rank, AF spectrum, singleton rate, agreement
-   with prior canonical pipeline) that justifies the choice.
+1. **Definitive call-set choice — pending stage 05d/05e completion.**
+   Hypothesis (to confirm): the per-sample → merge run produces ~1130 SNPs
+   matching the historical `merged_144.vcf.gz` (1133 SNPs / 144 samples).
+   Once 05e lands, that becomes the canonical input to stages 06/07/08.
 
-2. **Mechanism write-up.** Explain *which* parameter(s) of
-   `bcftools mpileup | bcftools call` caused the gap, in enough mechanistic
-   detail that someone reading the bcftools defaults can predict the
-   failure mode without rerunning a sweep. Working hypotheses to confirm
-   or refute: default `--ploidy 2` on a haploid genome (het-likelihood
-   gating drops real homoplasmic sites); `-q 30` mapping-quality filter
-   removing legitimate MT reads; interaction between `-A` and the
-   multiallelic caller producing phantom alts that mask real signal in
-   downstream stats.
+2. **Mechanism write-up — DONE.** See [`docs/02_calling_architecture.md`](docs/02_calling_architecture.md).
+   Documents the architectural difference, the AF-prior suppression
+   mechanism, AF-spectrum evidence, and a 7-point practical checklist for
+   mtDNA SNP calling with bcftools.
 
-3. **Practical checklist.** A short "what to set on mtDNA when calling with
-   bcftools" recipe other investigators can drop into their pipeline
-   without re-deriving from scratch. Likely lives in `docs/` once the
-   diagnostic runs land.
+3. **Practical checklist — DONE.** Section "Practical checklist for mtDNA
+   SNP calling with bcftools" in `docs/02_calling_architecture.md`.
 
-The v2 + v3 diagnostic re-runs (`jobs/05b_*.sh`, `jobs/05c_*.sh`,
-submitted 2026-05-09) are the experimental basis for items 1–2. Run
-manifests (`vcf/*_run_manifest.txt`) plus the comparison helper
-(`scripts/compare_stage05_runs.sh`) are the artifacts; the deliverable
-prose draws on those plus the existing `Fhet_mt_*_stats.txt` for v1.
+Experimental artifacts: `jobs/05_*.sh` (v1, joint strict),
+`jobs/05b_*.sh` (v2, joint relaxed + haploid), `jobs/05c_*.sh` (v3, joint
+no-MAPQ + haploid), `jobs/05d_persample_call.sh` + `jobs/05e_merge_persample.sh`
+(per-sample → merge, replicating the historical recipe). Stats files in
+`vcf/Fhet_mt_*_stats.txt` for the joint variants and
+`stats_old/merged_stats.txt` for the historical baseline. Run manifests
+sit alongside each stats file as `Fhet_mt_<RUN_TAG>_run_manifest.txt`.
 
 ## Compute split
 
@@ -51,19 +51,19 @@ prose draws on those plus the existing `Fhet_mt_*_stats.txt` for v1.
   - Trimmomatic PE
   - FastQC on trimmed reads
   - bwa mem + samtools sort/index against `Fhet_MT.fasta`
-  - `bcftools mpileup | bcftools call` (joint, with AD/DP) across all MT BAMs
+  - `bcftools mpileup | bcftools call --ploidy 1` PER SAMPLE (with `-a AD,DP`),
+    `bcftools norm -m -any` per sample, then `bcftools merge -m none` across
+    all 143 BAMs. See `jobs/05d_persample_call.sh` + `jobs/05e_merge_persample.sh`.
   - SnpEff annotation (when added)
   - `bcftools norm -m -any` (split multiallelic sites)
   - Final canonical output: `Fhet_MT_CDS.snps.split.vcf.gz` ← FROZEN once produced, do not rerun.
-    Status 2026-05-09 (session 6): Stage 05 strict run completed (v1, -Q 30 -q 30
-    ploidy=2) but yielded only 152 SNPs vs ~950 expected. Logs show clean exit
-    (max mem 371 MB / 16 GB, runtime 9h / 72h budget) — NOT a truncation. Two
-    diagnostic re-runs prepared:
-      v2: jobs/05b_v2_Q13_q20_p1.sh  (-Q 13 -q 20 --ploidy 1)
-      v3: jobs/05c_v3_Q13_q00_p1.sh  (-Q 13 -q  0 --ploidy 1)
-    Both write to distinct RUN_TAG output prefixes so the v1 strict result is
-    preserved on disk for comparison. Compare with scripts/compare_stage05_runs.sh.
-    Next: bsub both → wait → compare → pick winner → rsync → 06 → 07 → 08.
+    Status 2026-05-10 (session 7): joint-call v1/v2/v3 all converged to 152/152/145
+    SNPs, refuting the parametric hypothesis. Historical baseline `merged_144.vcf.gz`
+    (1133 SNPs / 144 samples) used per-sample → merge, recipe in
+    `archive/Notes_dlcs/Inital_call_wo_AD.txt`. Per-sample → merge re-implementation
+    landed as 05d (array) + 05e (merge); pending submission on Triton 2.
+    v1/v2/v3 outputs preserved as the methods-comparison artifacts.
+    Next: bsub 05d → wait → bsub 05e → verify ~1130 SNPs / ts/tv ≈ 7–9 → rsync → 06 → 07 → 08.
 
 - **Mac (local)** — fast iteration:
   - Python haplotype parsing
@@ -73,7 +73,7 @@ prose draws on those plus the existing `Fhet_mt_*_stats.txt` for v1.
 
 ## Rules for Claude
 
-1. **Don't rerun frozen outputs.** `Fhet_MT_CDS.snps.split.vcf.gz` is canonical *once produced*. Build downstream analysis on top of it. (Status 2026-05-09 session 6: stage 05 v1 strict run produced 152 SNPs vs ~950 expected; v2 + v3 diagnostic re-runs queued. Canonical is not yet produced — see CHANGELOG.)
+1. **Don't rerun frozen outputs.** `Fhet_MT_CDS.snps.split.vcf.gz` is canonical *once produced*. Build downstream analysis on top of it. (Status 2026-05-10 session 7: stage 05 v1/v2/v3 all converged ≈ 150 SNPs; gap localized to joint-call architecture; per-sample → merge re-implementation written as `jobs/05d_*.sh` + `jobs/05e_*.sh` and pending submission. Canonical not yet produced — see CHANGELOG.)
 2. **Don't commit data files.** `.gitignore` excludes `*.vcf.gz`, `*.bcf`, `*.bam`, `*.bai`, `*.fastq*`, `*.fasta`, `*.tbi`, `*.csi`. Scripts and docs only.
 3. **All BSUB scripts live under `jobs/`** with the numbered prefix (`01_..05_..`). New stages get the next number.
 4. **All log files write to `/projectnb/dcrawford/MT_Genomics2/logs/`** so they're easy to find and clean up.

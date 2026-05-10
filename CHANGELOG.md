@@ -2,6 +2,120 @@
 
 Session-by-session record of what changed.
 
+## 2026-05-10 (session 7) — Discrepancy resolved: gap is architectural (joint -mv vs per-sample → merge); stage 05d/05e written; methods write-up landed
+
+> **The 152-vs-1133 gap is solved at the diagnostic level.** v2 + v3 came
+> back essentially identical to v1 (152, 152, 145 SNPs respectively),
+> ruling out -Q, -q, and ploidy as the dominant variables. The historical
+> recipe was found in `archive/Notes_dlcs/Inital_call_wo_AD.txt` and the
+> historical stats file in `stats_old/merged_stats.txt` (1140 records,
+> 1133 SNPs, ts/tv 7.92 across 144 samples). The actual cause is the
+> deliberate switch from per-sample call → bcftools merge to a single
+> joint `bcftools call -mv` pipe, made on collaborator (MFO) advice to
+> get per-sample AD/DP for downstream haplotype calling. Joint -mv's
+> default allele-frequency prior suppresses sites where the reference is
+> the rare allele, which on this mtDNA panel against the divergent
+> NC_012312.1 reference is most variable positions. Mechanism written up
+> in `docs/02_calling_architecture.md`.
+
+- **v2 + v3 results (run on Triton 2 by user, stats rsynced to Mac
+  `vcf/`):**
+
+      metric                       fullAD   v2_Q13_q20_p1_fullAD   v3_Q13_q00_p1_variantsAD
+      samples                         143                    143                        143
+      records                         153                    153                        146
+      SNPs                            152                    152                        145
+      multiallelic SNP sites          145                    152                        145
+      ts/tv (1st alt only)           5.61                   6.60                       7.06
+      singleton SNPs (AC=1)            51                     40                         39
+
+  Per the decision tree in session 6: both v2 and v3 still ≈ 150 → gap is
+  upstream of stage 05's parameter choices.
+
+- **Recovered historical baseline.** User pointed to
+  `stats_old/merged_stats.txt` (Triton 2,
+  `/projectnb/dcrawford/SSM_Mito/merged_files/merged_144.vcf.gz`,
+  Jul 26 2025): **1140 records, 1133 SNPs, 144 samples, ts/tv 7.92** (all
+  alts) / **9.12** (1st alt). Three companion files in the same folder
+  document the filtering chain: `merged_144_3.stats.txt` (53,512 SNPs,
+  ts/tv 0.52 — raw candidate set), `merged_144_4.stats.txt` (16,517 SNPs,
+  ts/tv 0.50 — every-position output), `merged_144_2A.stats.txt` (empty,
+  failed filter step). The clean 1133 came out of a heavy filter chain
+  starting from the raw soup.
+
+- **Recovered historical recipe.** `archive/Notes_dlcs/Inital_call_wo_AD.txt`
+  documents the original per-sample-call → merge pipeline that produced
+  `merged_144.vcf.gz`. `archive/Previous_jobs/BSUB_1_MT_SNPcalls.sh` is the
+  historical per-sample BSUB. Key features: `--ploidy 1`, `bcftools mpileup`
+  defaults (no `-Q`/`-q` overrides), no `-A` in `bcftools call`,
+  `bcftools norm -m -any` per-sample, then `bcftools merge -m none` across
+  all 144. The recipe deliberately did NOT request `-a AD,DP` from mpileup;
+  that omission is what motivated the (architecturally fragile) switch to
+  joint mode in the first place.
+
+- **AF spectrum confirms which number is right.** Of the 1133 historical
+  SNPs, 1004 (89%) sit at AF ≥ 0.95 — i.e., the reference is the rare
+  allele at most variable positions. Singleton counts are similar across
+  regimes (55 historical vs 51/40/39 in v1/v2/v3): we catch rare variants
+  fine. The gap is at the high-AF end, where joint `-mv` suppresses
+  near-fixed-alt sites because they violate its default allele-frequency
+  prior. Historical ts/tv = 7.92 across all alts is squarely in the
+  expected vertebrate-mtDNA range, so the 1133 are real biology, not
+  reference-error noise.
+
+- **`docs/02_calling_architecture.md` — new.** Full mechanism write-up:
+  observation, what changed (architecture, normalization, `-A`), why
+  joint `-mv` suppresses high-AF sites, AF-spectrum evidence, and a
+  practical 7-point checklist for mtDNA SNP calling with bcftools. This
+  is the methods-write-up deliverable from CLAUDE.md's "Active primary
+  task" section.
+
+- **`jobs/05d_persample_call.sh` — new.** LSF array `[1-143]%24`
+  reproducing the historical per-sample recipe, with `-a AD,DP` added so
+  per-sample allele depths carry through merge (gives downstream stage 08
+  what it needs without forcing the joint architecture). Outputs land
+  under `vcf/persample/{sample}_norm.vcf.gz`. Resources: 4 cores / 8 GB /
+  2 h per task — matches the historical script's profile.
+
+- **`jobs/05e_merge_persample.sh` — new.** Single-job merge follow-up.
+  Pre-flights every per-sample VCF, `bcftools merge -m none`, reheader to
+  strip `_0`, stats, manifest. Output: `vcf/Fhet_mt_persample_merged.vcf.gz`
+  with target ~1130 SNPs (slightly below the historical 1133 since we
+  use 143 BAMs vs the historical 144).
+
+- **`docs/01_pipeline.md` updated.** Pipeline diagram now shows 05d → 05e
+  as the canonical path. Stage-05 section rewritten: 05d/05e are the
+  canonical scripts, 05/05b/05c are kept as the methods-comparison set
+  only (joint variants). Added rsync + symlink instructions in the
+  stage-06 prep block so existing 06/07 scripts (which read
+  `Fhet_mt_variantsAD.vcf.gz`) keep working without script edits.
+
+- **What this means for v1/v2/v3.** They are not bugs and they are not
+  "wrong" — they are the joint-`-mv`-default behavior on a panel with a
+  divergent reference. They remain in `jobs/` as the experimental
+  artifacts that anchor the methods write-up. Do NOT delete.
+
+- **Submit (Triton 2):**
+  ```
+  cd /projectnb/dcrawford/MT_Genomics2
+  git pull
+  bsub < jobs/05d_persample_call.sh
+  # wait for the array to finish (bjobs / tail logs/05d_persample_*_*.out)
+  bsub < jobs/05e_merge_persample.sh
+  ```
+
+- **Next-session pickup (in order):**
+  1. On Triton 2: `bjobs` until 05d's 143 array tasks all finish; submit 05e.
+  2. Verify: 05e's manifest summary should show ~1100–1133 SNPs and ts/tv
+     ≈ 7–9 across all alts. If it does, the discrepancy is fully resolved.
+  3. `bash scripts/compare_stage05_runs.sh vcf/Fhet_mt_*_stats.txt` —
+     full side-by-side table for the methods write-up.
+  4. rsync `Fhet_mt_persample_merged.vcf.gz` (+ `.csi`) to Mac `vcf/`,
+     symlink as `Fhet_mt_variantsAD.vcf.gz`, then run stages 06 → 07 → 08
+     unchanged.
+  5. Once stage 07 produces `Fhet_MT_CDS.snps.split.vcf.gz`, that file
+     becomes the frozen canonical output (per CLAUDE.md rule 1).
+
 ## 2026-05-09 (session 6) — Stage 05 strict run produced 152 SNPs vs ~950 expected; diagnostic v2 + v3 re-runs prepared; understanding the discrepancy elevated to a primary project task
 
 > **Primary task elevation:** Understanding *why* the same pipeline produces
