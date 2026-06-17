@@ -83,5 +83,20 @@ CONDA_ENV=mito_genomics
 module load "$CONDA_MODULE"
 eval "$(conda shell.bash hook)"
 
+# ── Locally-built bcftools / samtools / htslib 1.23.1 (DEFAULT) ──────────────
+# Why: bcftools 1.6 in the mito_genomics conda env produces a silent variant-
+# count collapse on high-depth mtDNA pileups — 3-sample test returned 6 SNPs
+# (1.6) vs 289 (1.23.1) from the same BAMs and recipe. See CHANGELOG
+# 2026-05-15. Built from source on Triton 2 (linux-ppc64le, where bioconda
+# pins to 1.6); binaries in ~/software/local/bin/, libs in ~/software/local/lib/.
+#
+# ORDERING CAVEAT: `conda activate "$CONDA_ENV"` prepends the env's bin to
+# PATH, which re-shadows these exports. For BSUB scripts that source
+# config.sh AND then conda activate, re-export both lines AFTER
+# `conda activate` (or skip conda activation entirely — preferred for any
+# script whose only env need is bcftools/samtools/htslib).
+export PATH="$HOME/software/local/bin:$PATH"
+export LD_LIBRARY_PATH="$HOME/software/local/lib:${LD_LIBRARY_PATH:-}"
+
 # ── Make sure logs directory exists (idempotent) ─────────────────────────────
 mkdir -p "$LOGS_DIR"

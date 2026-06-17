@@ -2,6 +2,8 @@
 
 Stage-by-stage. Each stage is one BSUB script under `jobs/`. Submit with `bsub < jobs/NN_*.sh` from `/projectnb/dcrawford/MT_Genomics2/` after the [per-session startup](00_setup.md#per-session-startup).
 
+> **Doc currency (2026-05-24, session 18).** The "Pipeline at a glance" diagram and the stage-05 walkthrough below still describe the **per-sample → merge** architecture (05d / 05e from sessions 6–10). The current canonical caller is `jobs/05_1_mpileup_merge.sh` (joint mpileup + call + norm-split in one pipeline, replacing 05d/05e/05f), with a hard baseline-regression gate against the 1128-SNP May-15 per-sample baseline. The per-sample → merge chain is preserved in `jobs/_archive/05d2_persample_call.sh` + `jobs/_archive/05e2_merge_persample.sh` as the validated baseline 05_1 must not regress against. Until this doc is refreshed end-to-end, see `CLAUDE.md` → "Canonical caller" and `CHANGELOG.md` 2026-05-18 (session 14) for the authoritative architecture description, and the "Downstream analysis (stages 08–18)" section at the bottom of this file for everything that runs on top of the frozen canonical.
+
 ## Pipeline at a glance
 
 ```
@@ -289,3 +291,238 @@ Logs land in `/projectnb/dcrawford/MT_Genomics2/logs/NN_<stage>_<jobid>.{out,err
 ```bash
 bsub -J 'fhet_align_mt[42]' < jobs/04_bwa_align_mt.sh   # re-run task #42 only
 ```
+
+---
+
+## Downstream analysis (stages 08–18)
+
+Everything from here runs **on Mac** on top of the frozen canonical
+`vcf/Fhet_MT_CDS.snps.split.vcf.gz`. No script in this block writes
+back into the canonical; the order is mostly flexible (intra-block
+dependencies are noted per stage). `CLAUDE.md` → "Downstream analysis
+scripts" carries the full catalog with docstring-level detail. Activate
+`SNP_env` (`micromamba activate SNP_env`) before running.
+
+### Downstream at-a-glance
+
+```
+Fhet_MT_CDS.snps.split.vcf.gz  ★ frozen canonical
+        │
+        ├── 08_call_haplotypes.py        ── haplotype matrix at AF≥0.7
+        │   → vcf/haplotype_matrix.csv, haplotype_calls.csv
+        │
+        ├── 10_dnds_per_gene.py          ── per-gene dN/dS (mt code table 2)
+        │   → vcf/dnds_per_gene.tsv
+        │
+        ├── 11_haplotypes_nonsyn.py      ── haplotype matrix, NS-only
+        │   → vcf/haplotype_matrix_nonsyn.csv
+        │
+        ├── 12_ns_cooccurrence.py        ── perfect-LD groups among NS sites
+        │   → vcf/ns_cooccurrence_groups.tsv
+        │
+        ├── DP_AD_table.py               ── long-format AD table
+        │   → vcf/mtDNA_long_AD_table.tsv
+        │
+        └── HETEROPLASMY THREAD
+              │
+              ├── 09_heteroplasmy_report.py    ── Hp on MT_DP_AD_141.txt
+              │   → vcf/heteroplasmy_{events,per_site,per_individual,summary}
+              │
+              ├── 13_pileup_cds_AD.sh          ── pileup over 13 CDS, all panel BAMs
+              │   → vcf/pileup_cds_141.vcf.gz
+              ├── 14_hp_from_pileup.py         ── Hp on pileup; private_alt_Hp reachable
+              │   → vcf/heteroplasmy_pileup_*_all.{tsv,txt}
+              ├── 15_well_bleed_test.py        ── plate-contamination test, 4 focals
+              │   → vcf/well_bleed_*.{tsv,txt}
+              │
+              ├── 16_annotate_hp.py            ── join SnpEff SYN/NS onto Hp events
+              │   → vcf/heteroplasmy_*_annot.tsv, heteroplasmy_annot_summary.txt
+              ├── 17_annotate_hp_codon.py      ── codon-fill Unannotated rows
+              │   → vcf/heteroplasmy_*_annot_codon.tsv,
+              │     heteroplasmy_annot_codon_summary.txt
+              └── 18_variant_burden_per_individual.py
+                                              ── per-sample variant counts (Total/SYN/NS)
+                                                 + Hp burden, 143 samples, master table
+                  → vcf/per_individual_burden_pileup.tsv,
+                    per_individual_burden_variant.tsv,
+                    per_individual_burden_summary.txt
+```
+
+### 08 — Haplotype calling (binary AF threshold)
+
+**Script:** `scripts/08_call_haplotypes.py`
+**Input:** `vcf/Fhet_MT_CDS.snps.split.vcf.gz`
+**Rule:** `AD_alt / DP > 0.7`, `MIN_DP = 3`, samples `70` / `125`
+excluded (run-quality issues; see session-10 CHANGELOG).
+**Outputs:** `vcf/haplotype_matrix.csv` (sites × samples binary call),
+`vcf/haplotype_calls.csv` (per-sample haplotype string, prefix `C_`).
+
+### 09 — Heteroplasmy report (variant-only input)
+
+**Script:** `scripts/09_heteroplasmy_report.py`
+**Input:** `vcf/MT_DP_AD_141.txt` (built outside this repo; variant-only
+per-cell DP/AD table).
+**Filter:** `0.1 ≤ AD/DP < 0.7` for Hp; `AD/DP ≥ 0.7` for major.
+**Classifier:** REF_Hp / shared_alt_Hp / private_alt_Hp. The third
+category is structurally 0 here — every (POS, ALT) in the input has
+at least one major-allele carrier by construction; see stage 14 for
+the proper answer to private-ALT-Hp.
+**Outputs:** `vcf/heteroplasmy_{events,per_site,per_individual,summary}.tsv|.txt`.
+
+### 10 — dN/dS per gene
+
+**Script:** `scripts/10_dnds_per_gene.py`
+**Inputs:** `Missing_Files/SSM_MT_ref/Fhet_MT.fasta`,
+`Missing_Files/SSM_MT_ref/Fhet_MT.gff`, the canonical VCF.
+**Method:** Nei-Gojobori site counting under the **vertebrate mitochondrial
+genetic code (NCBI table 2)**; strand-aware (ND6 reverse-complemented);
+polyA-completed stop codons in ND2/COX2/COX3/ND3/ND4 handled by truncating
+to the codon multiple. Observed S/N from the canonical's `ANN[0]`.
+**Output:** `vcf/dnds_per_gene.tsv` — one row per gene + Overall.
+
+### 11 — Nonsynonymous haplotype matrix
+
+**Script:** `scripts/11_haplotypes_nonsyn.py`
+**Input:** canonical VCF (filtered to `missense_variant` /
+`splice_region_variant&missense_variant` rows).
+**Otherwise identical** to stage 08 — same 0.7 threshold, same
+exclusions. Haplotype strings prefixed `N_` to distinguish.
+**Outputs:** `vcf/haplotype_matrix_nonsyn.csv`, `vcf/haplotype_calls_nonsyn.csv`.
+
+### 12 — NS co-occurrence (perfect LD)
+
+**Script:** `scripts/12_ns_cooccurrence.py`
+**Input:** `vcf/haplotype_matrix_nonsyn.csv` (preferred; falls back to
+the missense subset of `vcf/haplotype_matrix.csv`).
+**Identifies:** multi-site groups whose 141-element per-sample call
+vectors are identical (perfect LD across the panel).
+**Classifies:** `fixed_ref_divergence` (carriers = N_samples — the
+3 ND1/ND2 sites where the panel diverges from REF), `haplogroup`
+(≥2 carriers — the 7-site major NS clade in 64/141 samples), or
+`singleton_artifact` (1 carrier — aggregated private NS variants).
+**Output:** `vcf/ns_cooccurrence_groups.tsv`. CLI: `--min-carriers N`.
+
+### 13 — Per-CDS-position pileup (heteroplasmy thread)
+
+**Script:** `scripts/13_pileup_cds_AD.sh`
+**Pipeline:** `bcftools mpileup -a AD,DP -d 100000 --no-BAQ` over
+`docs/mito_protein_coding.bed` (13 CDS, 11,417 bp) across all 141
+panel BAMs (excludes 70, 125 by filename filter). `--no-BAQ` matches
+the 05_1 caller so the AD scale is consistent.
+**Output:** `vcf/pileup_cds_141.vcf.gz` (+ `.tbi`),
+`vcf/slim_bamlist_141.txt`.
+**Wall time:** 1–3 min on Mac.
+
+### 14 — Heteroplasmy from pileup (the canonical Hp set)
+
+**Script:** `scripts/14_hp_from_pileup.py`
+**Input:** `vcf/pileup_cds_141.vcf.gz` (from stage 13).
+**Thresholds:** `DP ≥ 20`, `0.10 ≤ AD/DP < 0.70`, `AD_Hp ≥ 4`.
+**Classifier:** same 3-way as stage 09 but `private_alt_Hp` is now
+reachable because the input is coverage-honest at every CDS position.
+**Outputs:** `vcf/heteroplasmy_pileup_{events,per_site,per_individual,summary}_all.{tsv,txt}`.
+**Session-17 result:** 1,124 Hp events / 64 individuals / 400 sites;
+**27 `private_alt_Hp` events** (vs 0 from stage 09).
+
+### 15 — Well-bleed contamination test
+
+**Script:** `scripts/15_well_bleed_test.py`
+**Inputs:** stage-14 events table; `data_files_May/WGS_seq_plate.txt`
+for the plate map (plate identity inferred from the `i5` column).
+**Question:** is the high Hp load on individuals 77 / 47 / 33 / 84
+explained by library-prep well bleed?
+**Method:** donor-concordance score (fraction of X's Hp events
+explained by Y's haplotype) × two test statistics (Spearman ρ of
+Score vs plate distance; mean(neighbor) − mean(far)), with 10,000-
+permutation one-sided p-values.
+**Outputs:** `vcf/well_bleed_{donor_ranking,results,summary}.{tsv,txt}`.
+**Session-17 result:** no well-bleed signal on any of the 4 focals;
+the score-saturation pattern is the signature of panel-level
+north × south mt admixture rather than contamination.
+
+### 16 — Coding-effect annotation (SYN / NS) on Hp events
+
+**Script:** `scripts/16_annotate_hp.py`
+**Inputs:** canonical VCF (for `ANN[0]`), `vcf/heteroplasmy_events.tsv`
+(stage 09), `vcf/heteroplasmy_pileup_events_all.tsv` (stage 14).
+**Method:** build `(POS, ALT) → {effect, effect_class, gene, hgvs_p}`
+from `ANN[0]`; for each Hp event, select the non-REF allele
+(`Major` if `Hp_is_REF` else `Hp_allele`) and look up its annotation.
+**Effect_class:** SYN (`synonymous_variant`), NS (`missense_variant`,
+`stop_gained`, `stop_lost`, `start_lost`, `initiator_codon_variant` —
+same set as scripts 10/11), Other, or Unannotated (POS/ALT not in
+canonical).
+**Outputs:** `vcf/heteroplasmy_events_annot.tsv` (1,088 rows; +5 cols),
+`vcf/heteroplasmy_pileup_events_all_annot.tsv` (1,124 rows; +5 cols),
+`vcf/heteroplasmy_annot_summary.txt` (Hp_class × Effect_class cross-tab).
+**Session-18 result:** ~89 % SYN / ~8 % NS among annotated events on
+both inputs; ~11:1 SYN:NS ratio consistent with purifying selection
+on protein-coding mt sites. 27 stage-14 `private_alt_Hp` events are
+all `Unannotated` by construction (their minor allele was never called
+as a panel variant) — see stage 17.
+
+### 17 — Codon-level fill for Unannotated rows
+
+**Script:** `scripts/17_annotate_hp_codon.py`
+**Inputs:** stage-16 annotated TSVs; reference FASTA + GFF.
+**Method:** for each row with `Effect_class == "Unannotated"` whose
+POS sits inside a CDS, build the REF codon using the same machinery
+as stage 10 (strand-aware; − strand complements the substituted
+base), substitute the non-REF allele, translate REF and ALT codons
+under NCBI table 2, and classify SYN (same AA) / NS (different AA,
+including stop_gained/stop_lost). REF-base sanity check guards against
+GFF/FASTA/event-table positioning drift.
+**New columns:** `Codon_ref`, `Codon_alt`, `AA_ref`, `AA_alt`,
+`Annotation_source ∈ {snpeff, codon}`.
+**Outputs:** `vcf/heteroplasmy_*_annot_codon.tsv`,
+`vcf/heteroplasmy_annot_codon_summary.txt`.
+**Session-18 result:** all 70 stage-14 Unannotated rows classified
+(12 SYN + 23 NS + 35 Other for non-CDS / `NONE` major calls), zero
+REF mismatches. The 35 SYN/NS rows include all 27 `private_alt_Hp`
+events; their ~1:2 SYN:NS ratio is notably enriched for NS vs the
+canonical 11:1 pattern.
+
+### 18 — Per-individual variant + Hp burden (bimodality test)
+
+**Script:** `scripts/18_variant_burden_per_individual.py`
+**Inputs:** canonical VCF (for per-sample GT counts);
+`vcf/heteroplasmy_pileup_per_individual_all.tsv` (stage 14);
+`vcf/heteroplasmy_per_individual.tsv` (stage 09).
+**Method:** for each sample, count `GT == "1"` calls in the canonical
+(ploidy=1; samples carry one allele per site), classify each row by
+`ANN[0]` (SYN / NS / Other). Join with per-individual Hp counts,
+**zero-filled for the ~80 samples not in `per_individual_all`** — needed
+because samples with zero Hp aren't in that file and dropping them
+would bias any group comparison.
+**Sample-name normalization:** extract leading numeric ID, so it joins
+stage-09 (`{N}_MT`) and stage-14 (`MT_only_bams/{N}_0_MT_only.bam`)
+on the same key.
+**Outputs (143 rows × 9 cols each):**
+- `vcf/per_individual_burden_pileup.tsv` (variant counts + stage-14 Hp)
+- `vcf/per_individual_burden_variant.tsv` (variant counts + stage-09 Hp)
+- `vcf/per_individual_burden_summary.txt` (low / mid / high variant ×
+  Hp summary)
+
+**Designed to test:** the bimodal variant-count distribution
+(north < ~50 ALTs vs south > ~190) vs per-individual Hp burden.
+**Session-18 result:** bimodality confirmed (77 samples at 15–26,
+65 samples at 220–233, 1 in between); low-variant samples carry
+~1.8× mean Hp (7.65 vs 4.34) and a higher fraction (51 % vs 37 %)
+have any Hp. The 4 admixed focals (47, 77 high-variant; 33, 84
+low-variant) sit at both extremes and dominate the Hp signal.
+Run Mann-Whitney U / Fisher exact (`scipy.stats` in `SNP_env`) on
+the analysis-ready tables for formal tests; run with and without
+the 4 focals to separate population-level from outlier-driven
+effects.
+
+### Dependencies among the downstream stages
+
+- 09 needs `MT_DP_AD_141.txt` (built outside the repo).
+- 13 → 14 → 15 is a chain (pileup → Hp → contamination test).
+- 16 needs the canonical (for ANN) and the events tables from 09 +/or 14.
+- 17 needs 16's `*_annot.tsv` outputs.
+- 18 needs the canonical (for per-sample GT) and the per-individual
+  files from 09 +/or 14.
+- 11 → 12 (12 can fall back to filtering 08's matrix if 11 hasn't run).
+- 10 is standalone.
+- 08 is standalone, runs in parallel with the heteroplasmy thread.

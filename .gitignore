@@ -1,3 +1,8 @@
+# Manuscripts / office docs — keep the code repo code-only
+*.docx
+*.pptx
+*.xlsx
+
 # Sequencing data — large, never commit
 *.vcf.gz
 *.vcf

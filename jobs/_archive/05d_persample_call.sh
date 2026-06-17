@@ -48,7 +48,7 @@ cd /projectnb/dcrawford/MT_Genomics2
 
 # === Load environment + paths ===
 source /projectnb/dcrawford/MT_Genomics2/jobs/config.sh
-conda activate "$CONDA_ENV"
+#conda activate "$CONDA_ENV"
 
 PERSAMPLE_DIR="${VCF_DIR}/persample"
 mkdir -p "$PERSAMPLE_DIR"

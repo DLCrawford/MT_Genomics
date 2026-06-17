@@ -1,0 +1,67 @@
+Genome-wide nucleotide diversity measures are higher for
+F. heteroclitus (p=0.0119) than for other species for which
+comparable whole-genome data are available. For example,
+genome-wide average p in F. heteroclitus is 4.8-fold higher
+than that among six marine stickleback fishes (p=0.0025)
+(Feulner et al. 2013). Similarly, variation in F. heteroclitus is
+higher than variation among black cottonwood trees, rice,
+wild and cultivated maize, Drosophila melanogaster, baker’s
+yeast isolates, crows, and Darwin’s finches (Liti et al. 2009;
+Sackton et al. 2009; Kolaczkowski et al. 2011; Huang et al.
+2012; Hufford et al. 2012; Pool et al. 2012; Evans et al. 2014;
+Poelstra et al. 2014; Lamichhaney et al. 2015). Placed within
+the context of a recent broad comparison of genetic diversity
+across the tree of life, where estimates of p were calculated
+from a few loci to genome-wide depending on the species,
+F. heteroclitus ranks as the most genetically diverse among
+fishes, and ranks in the 98th percentile among vertebrates
+(Leffler et al. 2012); F. heteroclitus diversity falls firmly within
+the range of arthropods and at the extreme upper end of the
+diversity range of vertebrates (median p for arthropod and
+chordate species was 0.0125 and 0.0026, respectively)
+(Leffler et al. 2012). Furthermore, the Block Island (RI) population
+we assess here is from the northern end of the species
+range, where genetic diversity is lower than in the south
+(Duvernell et al. 2008). Indeed, nucleotide diversity in coastal
+Virginia populations of F. heteroclitus is higher (p=0.016) (Reid
+et al. 2016).
+
+Reid, N.M., Jackson, C.E., Gilbert, D., Minx, P., Montague, M.J., Hampton, T.H., Helfrich, L.W., King, B.L., Nacci, D.E., Aluru, N., Karchner, S.I., Colbourne, J.K., Hahn, M.E., Shaw, J.R., Oleksiak, M.F., Crawford, D.L., Warren, W.C., and Whitehead, A.  2017. The landscape of extreme genomic variation in the highly adaptable Atlantic killifish. Genome Biol Evol,  9(3):659-76. 10.1093/gbe/evx023
+
+MacKay Dros p =0.0056 and theta 0.0067,
+similar to previous estimates from North American population
+
+yeast De Chiara, M., Friedrich, A., Barre, B., Breitenbach, M., Schacherer, J., and Liti, G.  2020. Discordant evolution of mitochondrial and nuclear yeast genomes at population level. BMC Biol,  18(1):49. 10.1186/s12915-020-00786-4
+We estimated the global
+genetic diversity by the average pairwise divergence π.
+Overall, we observed lower diversity in the coding nuclear
+(π ~ 0.003) [47] compared to the mitochondrial sequences
+(π ~ 0.0085, Additional file 2: Table S2), which
+contrasts to what was previously observed for other
+yeast species
+
+c elagans
+is lower
+than the population-wide diversity (π=0.0033, N=540),
+
+
+Drosophila
+Drosophila π estimates (L_CDS = 11,173 bp, N = 169 DGRP lines):
+SitesπTotal2170.00052Synonymous1190.00039Nonsynonymous980.00013pN/pS0.339
+
+	Sites	π
+Total	217	0.00052
+Synonymous	119	0.00039
+
+Notably, Australia and New Guinea have high nucleotide diversity across the complete mitochondrial genome (π = 2.26×10-3 and 2.42×10-3 respectively) 
+Nonsynonymous	98	0.00013
+pN/pS		0.339
+
+The generated mitochondrial data are available as FASTA for academic research use through the NCBI database with accession numbers PV558957–PV560130, and PX394655 and PX394656. FASTQ files are available for academic research use through ENA with study number PRJEB108938, accession numbers ERS29408145–ERS29409320.
+
+
+Human we generated 1176
+complete mitochondrial genomes from 13 countries across sub-Saharan Africa
+
+
+bcftools call -mv --ploidy 1 is a variant-only caller. It emits a site only if at least one sample's reads support a non-reference allele above the calling threshold. 

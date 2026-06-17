@@ -1,0 +1,9 @@
+cd ~/Projects/MT_Genomics_Cl_Ap2026/MT_Genomics2
+rm -f .git/index.lock                       # clear the stale lock I left
+git add jobs/ scripts/ docs/ README.md CLAUDE.md CHANGELOG.md .gitignore
+git add -u                                   # stage deletions of the old 05* / stats files
+git status                                   # REVIEW: confirm data_files_May/ & MT_G_Tables/ are NOT staged
+git commit -m "Session 20: full HPC + downstream pipeline (jobs 01-07, scripts 08-28); joint caller 05_1; manuscript pipeline references"
+git push origin main
+git tag -a v1.0-submission -m "Manuscript submission snapshot"
+git push origin v1.0-submission

@@ -1,0 +1,88 @@
+The value for syn, ns and ns/syn are similar, yet::
+Table 2.  Median number of variants per individual, (range) in N and S Clusters. Number variants per individual for 927sites (Total), for the synonymous (Syn), nonsynonymous (NonSyn) sites, and ratio nonsynonymous to synonymous (NS/Syn). Excludes individual 77
+
+
+Table 2 (per-individual NS/Syn) measures how many NS vs SYN derived alleles each individual carries — this is essentially divergence from the reference (or between clades). It includes both fixed AND segregating variants.
+Script 27 π/θ_W pN/pS measures NS vs SYN among segregating variants within each clade — purely within-clade polymorphism.
+These measure different things. Here's why they diverge:
+The north/south split is a haplogroup structure — most of the ~21 (north) or ~224 (south) variants per individual are fixed within their clade (all north individuals share the same ~21 alleles; all south share the same ~224). Fixed variants contribute to per-individual counts but contribute π = 0 (p=1, so p×(1-p)=0). Script 27 only sees the small subset of variants that are truly segregating within each clade.
+So the "similar" π/θ_W values between clades reflect similar within-clade polymorphism levels, while the very different NS/Syn ratios in Table 2 reflect different between-clade divergence patterns:
+
+South clade: accumulated ~10× more synonymous variants (208 vs 16) but only ~3× more NS (16 vs 5) → low NS/Syn = 0.08 → strong purifying selection during south clade divergence
+North clade: fewer total variants but proportionally more NS per individual → NS/Syn = 0.28 → either relaxed selection or drift in a smaller north population
+
+This is analogous to the McDonald-Kreitman logic: the per-individual NS/Syn is measuring fixed differences (dN/dS-like), while script 27 pN/pS is measuring polymorphism (π pN/pS). The south clade's low dN/dS-equivalent (0.08) vs north's higher value (0.28) could indicate stronger purifying selection in the south lineage, or that the south clade is older and has had more time for synonymous substitutions to accumulate.
+
+α (alpha) — proportion of adaptive substitutions
+α = 1 − NI = 1 − (Pn/Ps)/(Dn/Ds)  = 1-Ds*Pn/Dn*Ps
+Under strict neutrality, the ratio of NS to SYN should be the same among polymorphisms and fixed differences: Pn/Ps = Dn/Ds → NI = 1 → α = 0. If positive selection drove some NS changes to fixation, there will be more fixed NS than expected from the polymorphism ratio alone → Dn/Ds > Pn/Ps → NI < 1 → α > 0. So α estimates the fraction of amino-acid substitutions (fixed NS differences) that were driven to fixation by positive selection rather than drift. α = 0.575 would mean ~58% of fixed NS differences were adaptive — but as noted, with Dn = 3 this is not reliable.
+DoS — Direction of Selection (Stoletzki & Eyre-Walker 2011)
+DoS = Dn/(Dn+Ds) − Pn/(Pn+Ps)
+It asks: is the proportion of NS changes higher among fixed differences than among polymorphisms? Under neutrality, both proportions should be equal → DoS = 0. DoS > 0 means NS changes are over-represented among fixed differences relative to polymorphisms → positive selection. DoS < 0 means NS changes are under-represented among fixed differences → purifying selection removing NS variants before they fix.
+DoS has an advantage over α in that it is bounded (−1 to +1) and doesn't blow up when Ds is small. It is generally preferred when fixed difference counts are low — which is exactly our situation here.
+
+omega = Dn/Ds - Pn/Ps
+
+McDonald-Kreitman Test — Fhet mt CDS
+Reference outgroup: NC_012312.1 (F. heteroclitus)
+
+Reference NC_012312.1 is conspecific (F. heteroclitus), not a true outgroup. Fixed differences reflect divergence from reference individual, not interspecific divergence. Use congener (e.g. F. similis) for a standard MK test.
+
+============================================================
+  Overall Fhet — 141 samples  (N = 141)
+============================================================
+  MK table:
+                    Polymorphic (P)   Fixed (D)
+    Synonymous  :           757              6
+    Nonsynonymous:          161              3
+
+  Pn/Ps         : 0.2127
+  Dn/Ds         : 0.5000
+  NI            : 0.4254
+  α (adaptive)  : 0.5746
+  DoS           : 0.1580
+  Fisher p-val  : 0.2021
+  Odds ratio    : 2.3509
+
+============================================================
+  North cluster — < 50 variants  (N = ~77)
+============================================================
+  MK table:
+                    Polymorphic (P)   Fixed (D)
+    Synonymous  :           347              7
+    Nonsynonymous:           76              3
+
+  Pn/Ps         : 0.2190
+  Dn/Ds         : 0.4286
+  NI            : 0.5110
+  α (adaptive)  : 0.4890
+  DoS           : 0.1203
+  Fisher p-val  : 0.3990
+  Odds ratio    : 1.9568
+
+============================================================
+  South cluster — > 200 variants (excl. 77_MT)  (N = ~65)
+============================================================
+  MK table:
+                    Polymorphic (P)   Fixed (D)
+    Synonymous  :           319            168
+    Nonsynonymous:           83             13
+
+  Pn/Ps         : 0.2602
+  Dn/Ds         : 0.0774
+  NI            : 3.3624
+  α (adaptive)  : -2.3624
+  DoS           : -0.1346
+  Fisher p-val  : 0.0000
+  Odds ratio    : 0.2974
+
+Interpretation:
+  NI = 1     → neutral evolution
+  NI < 1, α > 0 → excess fixed NS → positive/adaptive selection
+  NI > 1, α < 0 → deficit fixed NS → slightly deleterious NS (purifying selection)
+  DoS > 0    → NS substitutions favoured relative to polymorphism
+  DoS < 0    → NS substitutions disfavoured (purifying selection)
+  Fisher p < 0.05 → significant departure from neutrality
+
+
+
