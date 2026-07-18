@@ -1,0 +1,28 @@
+name: mito_genomics
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  # --- read processing & alignment (HPC) ---
+  - fastqc=0.12
+  - trim-galore>=0.6.10        # Trim Galore wraps Cutadapt (paper: Trimmomatic v0.39 also usable)
+  - bwa=0.7.17
+  # --- variant calling ---
+  # NOTE: install bcftools/samtools/htslib 1.23.1 BUILT FROM SOURCE, not from bioconda.
+  # The bioconda linux-ppc64le build pins bcftools 1.6, which silently under-calls
+  # high-depth mtDNA pileups (docs/cautionary_note.md). The pins below are a floor;
+  # override with the source build on the PATH (see jobs/config.sh).
+  - bcftools>=1.19
+  - samtools>=1.19
+  - htslib>=1.19
+  # --- annotation ---
+  - snpeff=5.2
+  - openjdk>=17                # SnpEff runtime
+  # --- analysis (Python) ---
+  - python>=3.10
+  - pysam>=0.22
+  - cyvcf2>=0.30
+  - numpy>=1.26
+  - pandas>=2.0
+  - scipy>=1.11
+  - biopython>=1.83

@@ -1,0 +1,34 @@
+# ---- data (deposited to SRA / Zenodo, never in the code repo) ----
+*.vcf
+*.vcf.gz
+*.vcf.gz.tbi
+*.vcf.gz.csi
+*.bcf
+*.bam
+*.bai
+*.sam
+*.cram
+*.fastq
+*.fastq.gz
+*.fq
+*.fq.gz
+
+# reference indexes (keep the small FASTA/GFF in resources/, ignore indexes)
+resources/*.fasta.*
+resources/*.fa.*
+
+# ---- manuscripts, office, stats-tool artifacts ----
+*.docx
+*.doc
+*.pptx
+*.xlsx
+*.jsl
+*.zip
+~$*
+
+# ---- build / scratch ----
+__pycache__/
+*.pyc
+.DS_Store
+logs/
+*.log
