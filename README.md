@@ -1,5 +1,7 @@
 # MT_Genomics
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21536984.svg)](https://doi.org/10.5281/zenodo.21536984)
+
 Reproducible mitochondrial variant, haplotype, and diversity pipeline for
 *Fundulus heteroclitus*, supporting the manuscript **"Mitochondrial Genomics:
 Variation in an Admixture Population"** (Sierra-Martinez, Oleksiak & Crawford).
@@ -85,7 +87,7 @@ are set in `config.sh`.
 
 Sierra-Martinez S., Oleksiak M.F., Crawford D.L. *Mitochondrial Genomics:
 Variation in an Admixture Population.* *(journal, year, DOI TBD)*.
-Code archived at Zenodo *(DOI TBD)*.
+Code archived at Zenodo *(DOI 10.5281/zenodo.21536984)*.
 
 ## License
 

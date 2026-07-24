@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: "If you use this software or data, please cite it as below."
+title: "MT_Genomics: mitochondrial variant, haplotype, and diversity pipeline for Fundulus heteroclitus"
+authors:
+  - family-names: Sierra-Martinez
+    given-names: S.
+  - family-names: Oleksiak
+    given-names: M. F.
+  - family-names: Crawford
+    given-names: Douglas L.
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.21536984
+    description: Concept DOI (all versions)
+repository-code: "https://github.com/DLCrawford/MT_Genomics"
+license: MIT
