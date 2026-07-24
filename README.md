@@ -75,7 +75,7 @@ are set in `config.sh`.
 ## Data availability
 
 - **Raw sequence reads:** NCBI SRA / BioProject *(accession TBD)*.
-- **Analysis-ready variant call set + metadata:** Zenodo *(DOI TBD)* — contains
+- **Analysis-ready variant call set + metadata:** Zenodo *(DOI 10.5281/zenodo.21536984)* — contains
   `141_MT_variants.vcf.gz` (+ index), a sample-metadata table
   (ID → population → clade → plate/well), and this repository's release archive.
 - **Mitochondrial reference:** `resources/Fhet_MT.fasta` + `Fhet_MT.gff`
