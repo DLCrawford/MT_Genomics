@@ -13,6 +13,10 @@
 *.fq
 *.fq.gz
 
+# deposited data tables (per-species pi/theta etc.) live in the Zenodo deposit, not the repo
+data/*.tsv
+data/*.txt
+
 # reference indexes (keep the small FASTA/GFF in resources/, ignore indexes)
 resources/*.fasta.*
 resources/*.fa.*
