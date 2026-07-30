@@ -40,7 +40,11 @@ steps used htslib/bcftools 1.23.1 built from source.
 | scripts/19\_calc\_pi.py                                   | Mac          | Nucleotide diversity π (total / syn / NS) for the Fhet coding region                                                                                                                                                                                           | Python (pysam)                               | vcf/pi\_results.tsv — Table 5                           |
 | scripts/20\_calc\_pi\_clade.py                            | Mac          | π (total / syn / NS) split by North vs South clade (added for this revision)                                                                                                                                                                                   | Python (pysam)                               | vcf/pi\_by\_clade\_persite.tsv — Table 2 (π row)        |
 | scripts/20\_dros\_pi.py                                   | Mac          | Drosophila (DGRP) π for the cross-species comparison                                                                                                                                                                                                           | Python                                       | vcf/dros\_pi\_results.tsv — Table 5                     |
-| scripts/25\_comparison\_table.py                          | Mac          | Assemble cross-species comparison (N, L, Var, Syn, NS, θ, π and ratios)                                                                                                                                                                                        | Python                                       | vcf/comparison\_table.tsv — Table 5                     |
+| scripts/21\_human\_mt\_pi.py                             | Mac          | Human whole-mt π — Lankheet et al. 2026 (N=1,176 sub-Saharan African)                                                                                                                                                                                          | Python                                       | per-species π/θ — Table 5                               |
+| scripts/22\_human\_mt\_cds\_pi.py                        | Mac          | Human CDS π and Watterson’s θ — Lankheet et al. 2026 (N=1,176)                                                                                                                                                                                                 | Python                                       | per-species π/θ — Table 5                               |
+| scripts/23\_celegans\_pi.py                              | Mac          | C. elegans mt-CDS π and θ (N=540; selfing, 0/1 heterozygous calls excluded)                                                                                                                                                                                    | Python                                       | per-species π/θ — Table 5                               |
+| scripts/26\_amr\_pi.py                                   | Mac          | Human AMR mt-CDS π and θ — gnomAD v3.1 (N=5,718 admixed; AC\_hom only, AC\_het excluded)                                                                                                                                                                        | Python                                       | per-species π/θ — Table 5                               |
+| scripts/29\_comparison\_table\_Lcor.py                   | Mac          | Assemble cross-species comparison with **site-length-corrected** pN/pS (per-class L\_S, L\_N by Nei–Gojobori). Supersedes 25\_comparison\_table.py, which normalized both classes by total L\_CDS (see Note 4)                                                    | Python                                       | vcf/comparison\_table\_L\_cor.{tsv,txt} — Table 5       |
 | scripts/27\_fhet\_clusters\_pi.py                         | Mac          | π for the Fhet North/South clusters (comparison support)                                                                                                                                                                                                       | Python                                       | Table 2 / Table 5 support                               |
 | scripts/28\_mk\_test.py                                   | Mac          | McDonald–Kreitman-like test (α, ω) overall and per clade                                                                                                                                                                                                       | Python                                       | Table 6                                                 |
 | scripts/DP\_AD\_table.py                                  | Mac          | Long-format per-cell DP/AD table (alternative input)                                                                                                                                                                                                           | Python                                       | vcf/mtDNA\_long\_AD\_table.tsv                          |
@@ -70,9 +74,17 @@ always be read from the ordered \#\#bcftools\_\*Command /
 PATH-injected via config.sh). Mac: conda env SNP\_env (bcftools, pysam,
 cyvcf2, pandas, Java).
 
-4\. Cross-species comparison (Table 5). Per-species π/θ for the
-comparison datasets are produced by scripts kept alongside each dataset:
-Human\_mt/21\_human\_mt\_pi.py and 22\_human\_mt\_cds\_pi.py,
-C\_elegans/23\_celegans\_pi.py, and Yeast/24\_yeast\_pi.py, combined by
-scripts/25\_comparison\_table.py. (Yeast π is flagged unreliable; see
-repository notes.)
+4\. Cross-species comparison (Table 5). Per-species π and Watterson’s
+θ are computed by scripts/19\_calc\_pi.py (F. heteroclitus),
+20\_dros\_pi.py (Drosophila DGRP), 21\_human\_mt\_pi.py +
+22\_human\_mt\_cds\_pi.py (Human, Lankheet et al. 2026; N=1,176
+sub-Saharan African), 23\_celegans\_pi.py (C. elegans; N=540), and
+26\_amr\_pi.py (Human, gnomAD v3.1 AMR; N=5,718 admixed), and combined
+by scripts/29\_comparison\_table\_Lcor.py. Script 29 reports
+site-length-corrected pN/pS using per-class synonymous and
+nonsynonymous site counts (L\_S, L\_N by Nei–Gojobori); it supersedes
+25\_comparison\_table.py, which normalized both classes by the total CDS
+length and therefore collapsed pN/pS to the raw count ratio
+S\_ns/S\_syn. The Table 5 values use the corrected script 29. (Yeast π
+is flagged unreliable — a Biopython alignment artefact — so only
+literature θ\_W (De Chiara et al. 2020) is used; see repository notes.)
