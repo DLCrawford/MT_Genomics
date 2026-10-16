@@ -66,7 +66,7 @@ INPUTS
 ------
     refs/Fhet_MT.gff                                 (gene + CDS coords, strand)
     refs/Fhet_MT.fasta                               (reference sequence)
-    vcf/Fhet_MT_CDS.snps.split.vcf.gz                (canonical, SnpEff-annotated)
+    vcf/141_MT_variants.vcf.gz                       (141 individuals, SnpEff-annotated)
 
 OUTPUTS
 -------
@@ -108,7 +108,10 @@ def _find(filename: str) -> Path:
 
 REF_FASTA = _find("Fhet_MT.fasta")
 REF_GFF   = _find("Fhet_MT.gff")
-VCF_IN    = PROJECT_ROOT / "vcf" / "Fhet_MT_CDS.snps.split.vcf.gz"
+# 141-individual analysis set (#70 and #125 excluded; AC=0 sites dropped).
+# Changed 2026-10-16: was vcf/Fhet_MT_CDS.snps.split.vcf.gz (143 individuals), which added
+# 3 variants carried only by #70/#125 (ND2 4782, ND2 4914, ND5 12736).
+VCF_IN    = PROJECT_ROOT / "vcf" / "141_MT_variants.vcf.gz"
 OUT_TSV   = PROJECT_ROOT / "vcf" / "dnds_per_gene.tsv"
 
 

@@ -4,24 +4,21 @@ Data files are **not** stored in this repository. They are deposited in
 public archives and referenced by accession/DOI. To run the `scripts/`,
 drop the deposited files into this `data/` folder (it is git-ignored).
 
-## Deposited with this project (Zenodo, DOI 10.5281/zenodo.21536984)
+## Deposited with this project (Zenodo, DOI 10.5281/zenodo.23418103)
 
 | Item | File(s) | Reproduces | Notes |
 |---|---|---|---|
-| Analysis-ready variant call set | `141_MT_variants.vcf.gz` (+ `.tbi`) | Tables 1, 2, 4, 6; Fig. 2; Fhet row of Table 5 | 141 samples × 927 coding variants; per-cell GT/DP/AD + SnpEff `ANN` |
+| Analysis-ready variant call set | `141_MT_variants.vcf.gz` (+ `.tbi`) | Tables 1–6; Figs 2–4; *F. heteroclitus* row of Table 8 | 141 samples × 927 coding variants; per-cell GT/DP/AD + SnpEff `ANN` |
 | Sample metadata | metadata table | population/clade assignments | ID → population (DC/PA/TR) → clade (N/S) → plate/well |
 | Heteroplasmy pileup | `pileup_cds_141.vcf.gz` (+ `.tbi`) | Heteroplasmy section (script `14_hp_from_pileup.py`) | High-depth per-CDS-position AD/DP pileup across all 141 BAMs. **Not** derivable from `141_MT_variants.vcf.gz`; needed to reproduce the pileup-based (private-ALT) heteroplasmy without downloading the BAMs |
-| Cross-species π/θ tables | `celegans_pi_per_site.tsv`, `human_mt_pi_per_site.tsv`, `human_mt_cds_pi_per_site.tsv`, `amr_pi_per_site.tsv`, `dros_pi_results.tsv` | Table 5 (via `29_comparison_table_Lcor.py`) | Per-species per-site outputs; let a reader regenerate Table 5 without re-downloading the third-party source data below |
+| Cross-species π/θ tables | `celegans_pi_per_site.tsv`, `human_mt_pi_per_site.tsv`, `human_mt_cds_pi_per_site.tsv`, `amr_pi_per_site.tsv`, `dros_pi_results.tsv` | Table 8 (via `29_comparison_table_Lcor.py`) | Per-species per-site outputs; let a reader regenerate Table 8 without re-downloading the third-party source data below |
 
 `141_MT_variants.vcf.gz` reproduces the core Fundulus tables and figures;
 `pileup_cds_141.vcf.gz` adds the heteroplasmy section; the five `.tsv`
-tables add the cross-species comparison (Table 5).
+tables add the cross-species comparison (Table 8).
 
-> Adding the heteroplasmy pileup and the five comparison tables to an
-> existing Zenodo record creates a **new version** (the concept DOI
-> 10.5281/zenodo.21536984 always resolves to the latest). Update the
-> badge/DOI in the top-level `README.md` and `CITATION.cff` after
-> publishing the new version.
+> The Zenodo record also contains the complete analysis code (`MT_Genomics_code_complete.zip`,
+> 60 scripts/jobs) and the sample metadata table (`MT_Genomics_metafile.txt`).
 
 ## Third-party source data — cited, not re-hosted
 

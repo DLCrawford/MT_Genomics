@@ -1,0 +1,3 @@
+# contamination_numt
+
+Tests that the apparent heteroplasmy is not inter-individual contamination or NUMT signal: (1) `adjacent_well_direct_test.py` (adjacent plate wells), (2) private heteroplasmic variants (`scripts/14_hp_from_pileup.py`), (3) `whole_haplotype_contamination_test.py` (any single donor haplotype), (4) nuclear third-allele frequency over 10 Mb of chromosome 1 (`run_simpleVCF_allfish.sh` → `contam_allfish.py`; Table 7; `run_nuclear_contam_allfish_v2.sh` is a variant starting from an existing nuclear VCF), and the NUMT screen (`run_numt_pipeline.sh`). The HPC scripts (`run_*.sh`) run under LSF.
