@@ -332,8 +332,7 @@ Fhet_MT_CDS.snps.split.vcf.gz  ★ frozen canonical
               │   → vcf/pileup_cds_141.vcf.gz
               ├── 14_hp_from_pileup.py         ── Hp on pileup; private_alt_Hp reachable
               │   → vcf/heteroplasmy_pileup_*_all.{tsv,txt}
-              ├── 15_well_bleed_test.py        ── plate-contamination test, 4 focals
-              │   → vcf/well_bleed_*.{tsv,txt}
+              ├── (15_well_bleed_test.py — superseded; see contamination_numt/adjacent_well_direct_test.py)
               │
               ├── 16_annotate_hp.py            ── join SnpEff SYN/NS onto Hp events
               │   → vcf/heteroplasmy_*_annot.tsv, heteroplasmy_annot_summary.txt
@@ -424,21 +423,13 @@ reachable because the input is coverage-honest at every CDS position.
 **Session-17 result:** 1,124 Hp events / 64 individuals / 400 sites;
 **27 `private_alt_Hp` events** (vs 0 from stage 09).
 
-### 15 — Well-bleed contamination test
+### 15 — Well-bleed contamination test (superseded, not in the repository)
 
-**Script:** `scripts/15_well_bleed_test.py`
-**Inputs:** stage-14 events table; `data_files_May/WGS_seq_plate.txt`
-for the plate map (plate identity inferred from the `i5` column).
-**Question:** is the high Hp load on individuals 77 / 47 / 33 / 84
-explained by library-prep well bleed?
-**Method:** donor-concordance score (fraction of X's Hp events
-explained by Y's haplotype) × two test statistics (Spearman ρ of
-Score vs plate distance; mean(neighbor) − mean(far)), with 10,000-
-permutation one-sided p-values.
-**Outputs:** `vcf/well_bleed_{donor_ranking,results,summary}.{tsv,txt}`.
-**Session-17 result:** no well-bleed signal on any of the 4 focals;
-the score-saturation pattern is the signature of panel-level
-north × south mt admixture rather than contamination.
+The original `15_well_bleed_test.py` (plate-distance vs Hp-concordance correlation, restricted to
+Hp-bearing donors) was replaced for the manuscript by the direct adjacent-well test,
+`contamination_numt/adjacent_well_direct_test.py`, which allows any neighbouring individual as donor
+and scores whole haplotypes. The other contamination tests are `contamination_numt/whole_haplotype_contamination_test.py`
+and the nuclear third-allele screen (`run_simpleVCF_allfish.sh` → `contam_allfish.py`; manuscript Table 7).
 
 ### 16 — Coding-effect annotation (SYN / NS) on Hp events
 
