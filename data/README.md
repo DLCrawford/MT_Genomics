@@ -28,7 +28,7 @@ Data Availability):
 
 | Species / dataset | Source | Used by |
 |---|---|---|
-| Raw whole-genome reads (141 *F. heteroclitus*) | NCBI SRA / BioProject *(accession TBD)* | upstream of `141_MT_variants.vcf.gz` |
+| Mitochondrial reads (per-individual BAMs, 143 *F. heteroclitus*) | NCBI SRA, BioProject PRJNA1543696 | upstream of `141_MT_variants.vcf.gz` |
 | Human, sub-Saharan African (N=1,176) | Lankheet et al. 2026 | `21_human_mt_pi.py`, `22_human_mt_cds_pi.py` |
 | Human, AMR admixed (N=5,718) | gnomAD v3.1 (chrM) | `26_amr_pi.py` |
 | *C. elegans* wild isolates (N=540) | CaeNDR release | `23_celegans_pi.py` |

@@ -81,7 +81,8 @@ The full per-script index is `CANONICAL_SCRIPT_LIST.md`.
 
 ## Data availability
 
-- **Raw sequence reads:** NCBI SRA / BioProject *(accession TBD)*.
+- **Sequence reads:** NCBI SRA, BioProject [PRJNA1543696](https://www.ncbi.nlm.nih.gov/bioproject/PRJNA1543696) — per-individual
+  mitochondrial BAMs (143 individuals) aligned to `NC_012312.1`.
 - **Variant call set, heteroplasmy pileup, cross-species tables, metadata, and the complete code:**
   Zenodo, DOI [10.5281/zenodo.23418103](https://doi.org/10.5281/zenodo.23418103) — see `data/README.md`.
 - **Mitochondrial reference:** `resources/Fhet_MT.fasta` + `Fhet_MT.gff` (NCBI RefSeq `NC_012312.1`,
