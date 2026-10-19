@@ -22,7 +22,7 @@ Stage	Script	Platform	Purpose	Tools	Output (and manuscript Table/Figure)	MD5
 1 · Core pipeline (local, Mac)	18_variant_burden_per_individual.py	Mac	Per-individual variant counts (Total/SYN/NS); defines the bimodal North (<50) and South (>200) clusters	Python	per_individual_burden_*.tsv — Table 2; Fig. 3	0e2d630be851b544628d2d8ffd28570a
 1 · Core pipeline (local, Mac)	19_calc_pi.py	Mac	Nucleotide diversity π (total / syn / NS) for the Fhet coding region	Python (pysam)	vcf/pi_results.tsv — Table 8 (F. heteroclitus row)	5d87c87f5ca0d6174a09d26263842d9a
 1 · Core pipeline (local, Mac)	20_calc_pi_clade.py	Mac	π (total / syn / NS) split by North vs South clade (added for this revision)	Python (pysam)	vcf/pi_by_clade_persite.tsv — Table 3	3d74f2bbd825b6297ebcfb0434761abc
-1 · Core pipeline (local, Mac)	20_dros_pi.py	Mac	Drosophila (DGRP) π for the cross-species comparison	Python	vcf/dros_pi_results.tsv — Table 8	b48b1b08fa46e344d365c774c8db24f9
+1 · Core pipeline (local, Mac)	20_dros_pi.py	Mac	Drosophila (DGRP) π and θ for the cross-species comparison (segregating sites only)	Python	vcf/dros_pi_results.tsv — Table 8	d098c6c01e202d1ab0468c7c5bf91e63
 1 · Core pipeline (local, Mac)	21_human_mt_pi.py	Mac	Whole-genome nucleotide diversity (π) for complete human mtDNA genomes (cross-species comparison)	Python	Table 8 (human rows)	7d52d543852c4348c034364ba245d9e4
 1 · Core pipeline (local, Mac)	22_human_mt_cds_pi.py	Mac	CDS nucleotide diversity (π_syn, π_ns) for human mtDNA (cross-species comparison)	Python	Table 8 (human rows)	8f78933c14665a5cbabaf0c40e9fd47e
 1 · Core pipeline (local, Mac)	23_celegans_pi.py	Mac	C. elegans (CaeNDR, n = 540) π and θ for the cross-species comparison	Python (pysam)	celegans_pi_per_site.tsv — Table 8	6edb94501b03cabe8285fa46c78b0359
@@ -30,7 +30,7 @@ Stage	Script	Platform	Purpose	Tools	Output (and manuscript Table/Figure)	MD5
 1 · Core pipeline (local, Mac)	25_comparison_table.py	Mac	Assemble cross-species comparison (N, L, Var, Syn, NS, θ, π and ratios)	Python	vcf/comparison_table.tsv — superseded by 29_comparison_table_Lcor.py (Table 8)	42b1c52338a31bec306def50ae3a68cb
 1 · Core pipeline (local, Mac)	27_fhet_clusters_pi.py	Mac	π for the Fhet North/South clusters (comparison support)	Python	Table 3 / Table 8 support	acbad6d4d7bf509c5589630e339e63ee
 1 · Core pipeline (local, Mac)	28_mk_test.py	Mac	McDonald–Kreitman-like test (α, ω) overall and per clade	Python	supporting analysis (MK; not in manuscript tables)	c7b332279dc1fffb395fb91c65c2fcd5
-1 · Core pipeline (local, Mac)	29_comparison_table_Lcor.py	Mac	Site-length-corrected cross-species comparison table	Python	Table 8 (site-length-corrected)	86726c45b3c9e71c49eaeba7e0b3e055
+1 · Core pipeline (local, Mac)	29_comparison_table_Lcor.py	Mac	Site-length-corrected cross-species comparison table; segregating sites = sites with π > 0	Python	Table 8 (site-length-corrected)	105964f140145ecd62ab40bbc8ba78ab
 1 · Core pipeline (local, Mac)	30_outgroup_dS_gate.py	Mac	Synonymous-saturation gate for the outgroup-based MK test (decides whether count-based MK is valid)	Python	MK gate	a3d4ba198bc9d2010ccb9a2cdc512a49
 1 · Core pipeline (local, Mac)	31_mk_outgroup.py	Mac	Outgroup McDonald–Kreitman test for the Fhet mt CDS	Python	supporting analysis (MK; not in manuscript tables)	1c384884f5e488724af460ae3d243eb0
 1 · Core pipeline (local, Mac)	32_make_paml_input.py	Mac	Build PAML-ready codon alignment + control files for divergence dN/dS	Python; PAML	paml/ inputs	5182278360d94735b089fa66aa8ce7fd

@@ -42,7 +42,7 @@
 | `18_variant_burden_per_individual.py` | Mac | Per-individual variant counts (Total/SYN/NS); defines the bimodal North (<50) and South (>200) clusters | Python | per_individual_burden_*.tsv — Table 2; Fig. 3 |
 | `19_calc_pi.py` | Mac | Nucleotide diversity π (total / syn / NS) for the Fhet coding region | Python (pysam) | vcf/pi_results.tsv — Table 8 (F. heteroclitus row) |
 | `20_calc_pi_clade.py` | Mac | π (total / syn / NS) split by North vs South clade (added for this revision) | Python (pysam) | vcf/pi_by_clade_persite.tsv — Table 3 |
-| `20_dros_pi.py` | Mac | Drosophila (DGRP) π for the cross-species comparison | Python | vcf/dros_pi_results.tsv — Table 8 |
+| `20_dros_pi.py` | Mac | Drosophila (DGRP) π and θ for the cross-species comparison (segregating sites only) | Python | vcf/dros_pi_results.tsv — Table 8 |
 | `21_human_mt_pi.py` | Mac | Whole-genome nucleotide diversity (π) for complete human mtDNA genomes (cross-species comparison) | Python | Table 8 (human rows) |
 | `22_human_mt_cds_pi.py` | Mac | CDS nucleotide diversity (π_syn, π_ns) for human mtDNA (cross-species comparison) | Python | Table 8 (human rows) |
 | `23_celegans_pi.py` | Mac | C. elegans (CaeNDR, n = 540) π and θ for the cross-species comparison | Python (pysam) | celegans_pi_per_site.tsv — Table 8 |
@@ -50,7 +50,7 @@
 | `25_comparison_table.py` | Mac | Assemble cross-species comparison (N, L, Var, Syn, NS, θ, π and ratios) | Python | vcf/comparison_table.tsv — superseded by 29_comparison_table_Lcor.py (Table 8) |
 | `27_fhet_clusters_pi.py` | Mac | π for the Fhet North/South clusters (comparison support) | Python | Table 3 / Table 8 support |
 | `28_mk_test.py` | Mac | McDonald–Kreitman-like test (α, ω) overall and per clade | Python | supporting analysis (MK; not in manuscript tables) |
-| `29_comparison_table_Lcor.py` | Mac | Site-length-corrected cross-species comparison table | Python | Table 8 (site-length-corrected) |
+| `29_comparison_table_Lcor.py` | Mac | Site-length-corrected cross-species comparison table; segregating sites = sites with π > 0 | Python | Table 8 (site-length-corrected) |
 | `30_outgroup_dS_gate.py` | Mac | Synonymous-saturation gate for the outgroup-based MK test (decides whether count-based MK is valid) | Python | MK gate |
 | `31_mk_outgroup.py` | Mac | Outgroup McDonald–Kreitman test for the Fhet mt CDS | Python | supporting analysis (MK; not in manuscript tables) |
 | `32_make_paml_input.py` | Mac | Build PAML-ready codon alignment + control files for divergence dN/dS | Python; PAML | paml/ inputs |

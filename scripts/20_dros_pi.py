@@ -74,6 +74,12 @@ def main():
             continue
 
         n_alt   = int((called >= 1).sum())   # treat >=1 as ALT
+        # Segregating sites only (changed 2026-10-19): a site counts toward S (Watterson's theta)
+        # only if it varies among the called lines (0 < n_alt < n, i.e. pi_site > 0). The DGRP input
+        # lists 39 variants absent from these 169 lines and 1 fixed in all of them; these add nothing to
+        # pi but previously inflated S (217 -> 177).
+        if n_alt == 0 or n_alt == n:
+            continue
         freq    = n_alt / n
         pi_val  = pi_site(n, n_alt)
         ftype   = row['FuncType']

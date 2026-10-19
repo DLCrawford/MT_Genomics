@@ -29,11 +29,11 @@ L_S and L_N are Nei-Gojobori site counts:
                            the table-2 *code-level* synonymous fraction is
                            printed next to the Fhet/Human *actual-CDS*
                            fraction so the size of the approximation is visible.
-  * Yeast                — N/A (literature theta only; no syn/NS split).
 
 Data reading (TSV paths, class columns, s_filter for AMR) is reproduced from
-25_comparison_table.py so the segregating-site counts and pi sums are identical
-to the original table; only the denominators of the syn/NS terms change.
+25_comparison_table.py; only the denominators of the syn/NS terms change.
+Segregating sites (S, S_syn, S_ns) are rows with pi_site > 0 (sites that vary among
+the sampled individuals); rows that do not vary are excluded from S (2026-10-19).
 
 Outputs (in vcf/):
     comparison_table_L_cor.tsv     machine-readable
@@ -185,9 +185,6 @@ DATASETS = [
      "tsv":f"{BASE}/Hm_Mt/amr_pi_per_site.tsv",
      "cc":"Class","pc":"pi_site","syn":"synonymous","ns":"nonsynonymous",
      "sf":("AC_hom_amr",0),"code":"table2"},
-    {"name":"Yeast (lit. theta only)","N":1011,"L_CDS":6684,"tsv":None,
-     "cc":None,"pc":"pi_site","syn":None,"ns":None,"sf":None,"code":None,
-     "lit_S":384,"lit_theta":0.00766},
 ]
 
 
@@ -206,8 +203,12 @@ def read_counts(ds):
             pv = float(r[pc])
         except (KeyError, ValueError):
             continue
-        seg = True
-        if sf:
+        # Segregating site = pi_site > 0 (varies among the sampled individuals).  Changed 2026-10-19:
+        # previously every row counted toward S, so non-varying rows inflated Watterson's theta
+        # (F. heteroclitus: 9 variants fixed in all 141 -> S 927 -> 918; Drosophila: 40 rows -> S 217 -> 177).
+        # pi is unaffected (those rows have pi_site = 0).
+        seg = pv > 0
+        if seg and sf:
             try:
                 seg = float(r[sf[0]]) > sf[1]
             except (KeyError, ValueError):
@@ -295,7 +296,8 @@ def main():
         fh.write("pN/pS = (S_ns/L_N)/(S_syn/L_S) [theta] and (piN/L_N)/(piS/L_S) [pi]\n")
         fh.write(f"L_S/L_N: Fhet & Human exact (Nei-Gojobori, NCBI table 2); "
                  f"Drosophila & C.elegans code-level estimate (table 5, "
-                 f"syn-frac={frac5_code:.4f}); Yeast N/A.\n")
+                 f"syn-frac={frac5_code:.4f}).\n")
+        fh.write("Segregating sites (S) = sites with pi > 0 (vary among the sampled individuals).\n")
         fh.write(f"Validation: table-2 code-level syn-frac={frac2_code:.4f} vs "
                  f"actual Fhet {frac_fhet:.4f} / Human {frac_human:.4f}.\n\n")
         hdr = ["Dataset","N","L_CDS","L_S","L_N","src","S","Ssyn","Sns",
